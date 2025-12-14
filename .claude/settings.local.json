@@ -3,7 +3,15 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Complete EVAGas website redesign with SEO & AI optimization\n\n- Modern, responsive single-page website for EVAGas LPG supplier\n- Comprehensive SEO implementation:\n  - Optimized meta tags targeting LPG/gas keywords\n  - Open Graph and Twitter Card markup\n  - Geographic meta tags for local SEO\n- AI search optimization (ChatGPT, Perplexity, Bing Chat):\n  - LocalBusiness schema with services, hours, areas served\n  - FAQPage schema with 6 common questions\n  - Speakable schema for voice search\n  - Service and BreadcrumbList schemas\n- New FAQ section with interactive accordion\n- Full accessibility support:\n  - Skip navigation, ARIA labels, semantic HTML\n  - Reduced motion and high contrast support\n  - Print stylesheet\n- Clean, professional design with animations\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Focus service areas on Gauteng, Hartbeespoort, Rustenburg & Brits\n\n- Update SEO meta tags (title, description, keywords) for regional targeting\n- Update Open Graph and Twitter card metadata for regional focus\n- Update Schema.org areaServed to include North West province cities\n- Update hero section with regional messaging\n- Update FAQ answers with specific service areas\n- Update about section for Gauteng & North West focus\n- Update contact and footer sections with regional coverage\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(dir \"C:\\Users\\ItaloOlivier\\Downloads\" /b)",
+      "Bash(findstr:*)",
+      "Bash(Get-ChildItem -Path \"C:\\Users\\ItaloOlivier\\Downloads\" -Name)",
+      "Bash(Where-Object { $_ -match \"eva|gas|logo\" -or $_ -match \"\\.(png|jpg|jpeg|svg|webp)$\" })",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Update design to match EVAGas brand logo\n\n- Update color scheme with brand colors (red #E63E2D, coral accent #F4776A)\n- Replace logo SVG with triple-flame design matching official logo\n- Add \"EVOLVED ENERGY\" tagline in footer\n- Update typography to bolder, more impactful style (800 weight)\n- Redesign hero flame animation with triple-flame structure\n- Update favicon with flame icon design\n- Improve button styling with uppercase text and red glow\n- Tighter letter-spacing for professional appearance\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Use exact EVAGas logo image instead of SVG recreation\n\n- Add actual logo.jpg from brand assets\n- Replace SVG logo in header with actual logo image\n- Replace SVG logo in footer with actual logo image\n- Update CSS styling for image-based logo\n- Add responsive styling for mobile (40px height)\n- Add white background container for footer logo visibility\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)"
     ]
   }
 }
