@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Complete EVAGas website redesign with SEO & AI optimization\n\n- Modern, responsive single-page website for EVAGas LPG supplier\n- Comprehensive SEO implementation:\n  - Optimized meta tags targeting LPG/gas keywords\n  - Open Graph and Twitter Card markup\n  - Geographic meta tags for local SEO\n- AI search optimization (ChatGPT, Perplexity, Bing Chat):\n  - LocalBusiness schema with services, hours, areas served\n  - FAQPage schema with 6 common questions\n  - Speakable schema for voice search\n  - Service and BreadcrumbList schemas\n- New FAQ section with interactive accordion\n- Full accessibility support:\n  - Skip navigation, ARIA labels, semantic HTML\n  - Reduced motion and high contrast support\n  - Print stylesheet\n- Clean, professional design with animations\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
+    ]
+  }
+}

@@ -126,6 +126,32 @@ ul {
     color: var(--primary);
 }
 
+/* Outline button for dark backgrounds (hero section) */
+.hero .btn-outline {
+    color: var(--white);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.hero .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--white);
+    color: var(--white);
+}
+
+/* WhatsApp Button */
+.btn-whatsapp {
+    background: #25D366;
+    color: var(--white);
+    border-color: #25D366;
+}
+
+.btn-whatsapp:hover {
+    background: #128C7E;
+    border-color: #128C7E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+}
+
 .btn-white {
     background: var(--white);
     color: var(--primary);
