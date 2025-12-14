@@ -662,7 +662,91 @@
                     </div>
                     <div class="about-visual">
                         <div class="about-image">
-                            <div class="image-decoration" aria-hidden="true"></div>
+                            <div class="about-tank-illustration" aria-hidden="true">
+                                <svg viewBox="0 0 180 320" fill="none" class="about-gas-tank" role="img" aria-label="LPG Gas Tank">
+                                    <defs>
+                                        <linearGradient id="aboutCylinderGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#5a6474"/>
+                                            <stop offset="20%" stop-color="#8a949e"/>
+                                            <stop offset="40%" stop-color="#9aa4ae"/>
+                                            <stop offset="50%" stop-color="#b0bac4"/>
+                                            <stop offset="60%" stop-color="#9aa4ae"/>
+                                            <stop offset="80%" stop-color="#7a848e"/>
+                                            <stop offset="100%" stop-color="#4a545e"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutDomeGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                                            <stop offset="0%" stop-color="#6a747e"/>
+                                            <stop offset="50%" stop-color="#8a949e"/>
+                                            <stop offset="100%" stop-color="#5a646e"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutBottomGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" stop-color="#6a747e"/>
+                                            <stop offset="100%" stop-color="#3a444e"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutValveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#c5a030"/>
+                                            <stop offset="30%" stop-color="#e8c84a"/>
+                                            <stop offset="50%" stop-color="#f5d85a"/>
+                                            <stop offset="70%" stop-color="#e8c84a"/>
+                                            <stop offset="100%" stop-color="#b59020"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutHandleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#4a545e"/>
+                                            <stop offset="50%" stop-color="#6a747e"/>
+                                            <stop offset="100%" stop-color="#4a545e"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutRingGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" stop-color="#7a848e"/>
+                                            <stop offset="50%" stop-color="#5a646e"/>
+                                            <stop offset="100%" stop-color="#4a545e"/>
+                                        </linearGradient>
+                                        <linearGradient id="aboutHighlightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+                                            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Protective collar/ring at top -->
+                                    <ellipse cx="90" cy="58" rx="42" ry="8" fill="url(#aboutRingGradient)"/>
+                                    <rect x="48" y="50" width="84" height="12" fill="url(#aboutRingGradient)"/>
+                                    <ellipse cx="90" cy="50" rx="42" ry="8" fill="#6a747e"/>
+                                    <!-- Handle arch -->
+                                    <path d="M55 45 Q55 20 90 20 Q125 20 125 45" stroke="url(#aboutHandleGradient)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                                    <!-- Valve assembly -->
+                                    <rect x="80" y="28" width="20" height="22" rx="3" fill="url(#aboutValveGradient)"/>
+                                    <ellipse cx="90" cy="28" rx="10" ry="3" fill="#d8b840"/>
+                                    <rect x="85" y="18" width="10" height="12" rx="2" fill="url(#aboutValveGradient)"/>
+                                    <ellipse cx="90" cy="18" rx="5" ry="2" fill="#c5a030"/>
+                                    <!-- Valve wheel -->
+                                    <ellipse cx="90" cy="12" rx="12" ry="4" fill="#2a2a2a"/>
+                                    <ellipse cx="90" cy="10" rx="12" ry="4" fill="#3a3a3a"/>
+                                    <ellipse cx="90" cy="10" rx="8" ry="2.5" fill="#1a1a1a"/>
+                                    <!-- Main cylinder body -->
+                                    <rect x="30" y="60" width="120" height="210" fill="url(#aboutCylinderGradient)"/>
+                                    <!-- Top dome curve -->
+                                    <ellipse cx="90" cy="60" rx="60" ry="18" fill="url(#aboutDomeGradient)"/>
+                                    <!-- Bottom curve -->
+                                    <ellipse cx="90" cy="270" rx="60" ry="20" fill="url(#aboutBottomGradient)"/>
+                                    <!-- Weld seam lines -->
+                                    <line x1="30" y1="100" x2="150" y2="100" stroke="#5a646e" stroke-width="1.5"/>
+                                    <line x1="30" y1="230" x2="150" y2="230" stroke="#5a646e" stroke-width="1.5"/>
+                                    <!-- Vertical seam -->
+                                    <line x1="90" y1="60" x2="90" y2="270" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+                                    <!-- Cylinder highlight reflection -->
+                                    <ellipse cx="60" cy="160" rx="15" ry="80" fill="url(#aboutHighlightGradient)" opacity="0.5"/>
+                                    <!-- Dark band for text background -->
+                                    <rect x="35" y="115" width="110" height="85" fill="rgba(0,0,0,0.4)" rx="4"/>
+                                    <!-- EVAGas branding -->
+                                    <text x="90" y="145" text-anchor="middle" fill="#E63E2D" font-size="22" font-weight="bold" font-family="Arial, sans-serif">EVAGas</text>
+                                    <!-- LPG text -->
+                                    <text x="90" y="185" text-anchor="middle" fill="#ffffff" font-size="38" font-weight="bold" font-family="Arial, sans-serif">LPG</text>
+                                    <!-- Foot ring / base -->
+                                    <ellipse cx="90" cy="285" rx="55" ry="12" fill="#3a444e"/>
+                                    <rect x="35" y="275" width="110" height="12" fill="#4a545e"/>
+                                    <ellipse cx="90" cy="275" rx="55" ry="10" fill="#5a646e"/>
+                                    <!-- Base shadow -->
+                                    <ellipse cx="90" cy="295" rx="50" ry="8" fill="rgba(0,0,0,0.2)"/>
+                                </svg>
+                            </div>
                             <div class="about-card">
                                 <span class="about-card-number">10+</span>
                                 <span class="about-card-text">Years Serving South Africa</span>
