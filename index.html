@@ -461,20 +461,114 @@
                         <div class="flame flame-3"></div>
                     </div>
                     <div class="tank-illustration">
-                        <svg viewBox="0 0 200 300" fill="none" class="gas-tank" role="img" aria-label="LPG Gas Tank Illustration">
-                            <ellipse cx="100" cy="50" rx="60" ry="20" fill="#374151"/>
-                            <rect x="40" y="50" width="120" height="200" rx="10" fill="url(#tankGradient)"/>
-                            <ellipse cx="100" cy="250" rx="60" ry="20" fill="#1f2937"/>
-                            <rect x="55" y="80" width="90" height="40" rx="5" fill="#1f2937"/>
-                            <text x="100" y="107" text-anchor="middle" fill="white" font-size="14" font-weight="bold">LPG</text>
-                            <circle cx="100" cy="160" r="30" fill="#E63E2D" opacity="0.2"/>
-                            <path d="M100 135C100 135 85 150 85 160C85 168 92 175 100 175C108 175 115 168 115 160C115 150 100 135 100 135Z" fill="#E63E2D"/>
+                        <svg viewBox="0 0 180 320" fill="none" class="gas-tank" role="img" aria-label="LPG Gas Tank Illustration">
                             <defs>
-                                <linearGradient id="tankGradient" x1="40" y1="50" x2="160" y2="250" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#4b5563"/>
-                                    <stop offset="1" stop-color="#374151"/>
+                                <!-- Main cylinder gradient - metallic gray -->
+                                <linearGradient id="cylinderGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#5a6474"/>
+                                    <stop offset="20%" stop-color="#8a949e"/>
+                                    <stop offset="40%" stop-color="#9aa4ae"/>
+                                    <stop offset="50%" stop-color="#b0bac4"/>
+                                    <stop offset="60%" stop-color="#9aa4ae"/>
+                                    <stop offset="80%" stop-color="#7a848e"/>
+                                    <stop offset="100%" stop-color="#4a545e"/>
+                                </linearGradient>
+                                <!-- Top dome gradient -->
+                                <linearGradient id="domeGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                                    <stop offset="0%" stop-color="#6a747e"/>
+                                    <stop offset="50%" stop-color="#8a949e"/>
+                                    <stop offset="100%" stop-color="#5a646e"/>
+                                </linearGradient>
+                                <!-- Bottom curve shadow -->
+                                <linearGradient id="bottomGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#6a747e"/>
+                                    <stop offset="100%" stop-color="#3a444e"/>
+                                </linearGradient>
+                                <!-- Valve gradient -->
+                                <linearGradient id="valveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#c5a030"/>
+                                    <stop offset="30%" stop-color="#e8c84a"/>
+                                    <stop offset="50%" stop-color="#f5d85a"/>
+                                    <stop offset="70%" stop-color="#e8c84a"/>
+                                    <stop offset="100%" stop-color="#b59020"/>
+                                </linearGradient>
+                                <!-- Handle gradient -->
+                                <linearGradient id="handleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#4a545e"/>
+                                    <stop offset="50%" stop-color="#6a747e"/>
+                                    <stop offset="100%" stop-color="#4a545e"/>
+                                </linearGradient>
+                                <!-- Ring/collar gradient -->
+                                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#7a848e"/>
+                                    <stop offset="50%" stop-color="#5a646e"/>
+                                    <stop offset="100%" stop-color="#4a545e"/>
+                                </linearGradient>
+                                <!-- Highlight -->
+                                <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="rgba(255,255,255,0.3)"/>
+                                    <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
                                 </linearGradient>
                             </defs>
+
+                            <!-- Protective collar/ring at top -->
+                            <ellipse cx="90" cy="58" rx="42" ry="8" fill="url(#ringGradient)"/>
+                            <rect x="48" y="50" width="84" height="12" fill="url(#ringGradient)"/>
+                            <ellipse cx="90" cy="50" rx="42" ry="8" fill="#6a747e"/>
+
+                            <!-- Handle arch -->
+                            <path d="M55 45 Q55 20 90 20 Q125 20 125 45" stroke="url(#handleGradient)" stroke-width="8" fill="none" stroke-linecap="round"/>
+
+                            <!-- Valve assembly -->
+                            <rect x="80" y="28" width="20" height="22" rx="3" fill="url(#valveGradient)"/>
+                            <ellipse cx="90" cy="28" rx="10" ry="3" fill="#d8b840"/>
+                            <rect x="85" y="18" width="10" height="12" rx="2" fill="url(#valveGradient)"/>
+                            <ellipse cx="90" cy="18" rx="5" ry="2" fill="#c5a030"/>
+                            <!-- Valve wheel -->
+                            <ellipse cx="90" cy="12" rx="12" ry="4" fill="#2a2a2a"/>
+                            <ellipse cx="90" cy="10" rx="12" ry="4" fill="#3a3a3a"/>
+                            <ellipse cx="90" cy="10" rx="8" ry="2.5" fill="#1a1a1a"/>
+
+                            <!-- Main cylinder body -->
+                            <rect x="30" y="60" width="120" height="210" fill="url(#cylinderGradient)"/>
+
+                            <!-- Top dome curve -->
+                            <ellipse cx="90" cy="60" rx="60" ry="18" fill="url(#domeGradient)"/>
+
+                            <!-- Bottom curve -->
+                            <ellipse cx="90" cy="270" rx="60" ry="20" fill="url(#bottomGradient)"/>
+
+                            <!-- Weld seam lines for realism -->
+                            <line x1="30" y1="100" x2="150" y2="100" stroke="#5a646e" stroke-width="1.5"/>
+                            <line x1="30" y1="230" x2="150" y2="230" stroke="#5a646e" stroke-width="1.5"/>
+
+                            <!-- Vertical seam -->
+                            <line x1="90" y1="60" x2="90" y2="270" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+
+                            <!-- Cylinder highlight reflection -->
+                            <ellipse cx="60" cy="160" rx="15" ry="80" fill="url(#highlightGradient)" opacity="0.5"/>
+
+                            <!-- Label area - white background -->
+                            <rect x="45" y="120" width="90" height="100" rx="4" fill="#ffffff"/>
+                            <rect x="45" y="120" width="90" height="100" rx="4" stroke="#d0d0d0" stroke-width="1" fill="none"/>
+
+                            <!-- EVAGas branding on label -->
+                            <text x="90" y="148" text-anchor="middle" fill="#E63E2D" font-size="16" font-weight="bold" font-family="Arial, sans-serif">EVAGas</text>
+
+                            <!-- LPG text -->
+                            <text x="90" y="175" text-anchor="middle" fill="#1a1a1a" font-size="28" font-weight="bold" font-family="Arial, sans-serif">LPG</text>
+
+                            <!-- Small flame icon on label -->
+                            <path d="M90 188 C90 188 80 198 80 205 C80 211 84 216 90 216 C96 216 100 211 100 205 C100 198 90 188 90 188Z" fill="#E63E2D"/>
+                            <path d="M90 195 C90 195 86 200 86 204 C86 207 88 209 90 209 C92 209 94 207 94 204 C94 200 90 195 90 195Z" fill="#F4776A"/>
+
+                            <!-- Foot ring / base -->
+                            <ellipse cx="90" cy="285" rx="55" ry="12" fill="#3a444e"/>
+                            <rect x="35" y="275" width="110" height="12" fill="#4a545e"/>
+                            <ellipse cx="90" cy="275" rx="55" ry="10" fill="#5a646e"/>
+
+                            <!-- Base shadow -->
+                            <ellipse cx="90" cy="295" rx="50" ry="8" fill="rgba(0,0,0,0.2)"/>
                         </svg>
                     </div>
                 </div>
