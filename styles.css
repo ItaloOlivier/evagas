@@ -471,84 +471,6 @@ ul {
     50% { transform: translateY(-15px); }
 }
 
-.flame-container {
-    position: absolute;
-    top: -60px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-}
-
-/* Triple flame design matching EVAGas logo */
-.flame {
-    position: absolute;
-    bottom: 0;
-    width: 40px;
-    height: 80px;
-    background: linear-gradient(to top, var(--primary) 0%, var(--primary-light) 70%, var(--flame-accent) 100%);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    animation: flicker 0.8s ease-in-out infinite alternate;
-    filter: drop-shadow(0 10px 30px rgba(230, 62, 45, 0.5));
-}
-
-/* Center main flame */
-.flame-1 {
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 3;
-}
-
-/* Left accent flame */
-.flame-2 {
-    width: 28px;
-    height: 55px;
-    left: 50%;
-    transform: translateX(-120%);
-    background: linear-gradient(to top, var(--flame-accent) 0%, var(--primary-light) 100%);
-    animation-delay: 0.15s;
-    opacity: 0.85;
-    z-index: 2;
-}
-
-/* Right accent flame */
-.flame-3 {
-    width: 28px;
-    height: 55px;
-    left: 50%;
-    transform: translateX(20%);
-    background: linear-gradient(to top, var(--flame-accent) 0%, var(--primary-light) 100%);
-    animation-delay: 0.3s;
-    opacity: 0.85;
-    z-index: 2;
-}
-
-@keyframes flicker {
-    0% {
-        transform: translateX(-50%) scaleY(1) scaleX(1);
-        filter: drop-shadow(0 10px 30px rgba(230, 62, 45, 0.5));
-    }
-    100% {
-        transform: translateX(-50%) scaleY(1.08) scaleX(0.95);
-        filter: drop-shadow(0 15px 40px rgba(230, 62, 45, 0.6));
-    }
-}
-
-.flame-2, .flame-3 {
-    animation-name: flicker-side;
-}
-
-@keyframes flicker-side {
-    0% {
-        transform: translateX(-130%) scaleY(1) scaleX(1);
-    }
-    100% {
-        transform: translateX(-130%) scaleY(1.1) scaleX(0.92);
-    }
-}
 
 /* Hero Scroll */
 .hero-scroll {
@@ -1204,23 +1126,6 @@ ul {
         width: 140px;
     }
 
-    .flame-container {
-        top: -45px;
-        width: 80px;
-        height: 60px;
-    }
-
-    .flame {
-        width: 28px;
-        height: 55px;
-    }
-
-    .flame-2,
-    .flame-3 {
-        width: 20px;
-        height: 40px;
-    }
-
     .feature-card {
         padding: 32px 24px;
     }
@@ -1305,23 +1210,6 @@ ul {
 
     .gas-tank {
         width: 120px;
-    }
-
-    .flame-container {
-        top: -35px;
-        width: 70px;
-        height: 50px;
-    }
-
-    .flame {
-        width: 22px;
-        height: 45px;
-    }
-
-    .flame-2,
-    .flame-3 {
-        width: 16px;
-        height: 32px;
     }
 }
 
@@ -1492,7 +1380,6 @@ summary:focus {
         scroll-behavior: auto !important;
     }
 
-    .flame,
     .scroll-dot,
     .badge-dot,
     .gas-tank {
@@ -1518,8 +1405,7 @@ summary:focus {
     .hero-visual,
     .cta,
     .hero-scroll,
-    .btn,
-    .flame-container {
+    .btn {
         display: none !important;
     }
 
