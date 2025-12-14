@@ -319,7 +319,8 @@ ul {
     display: flex;
     align-items: center;
     background: linear-gradient(135deg, var(--gray-900) 0%, var(--dark) 100%);
-    overflow: hidden;
+    overflow: visible;
+    padding: 120px 0 80px;
 }
 
 .hero-bg {
@@ -436,7 +437,9 @@ ul {
 
 .stat-label {
     font-size: 14px;
-    color: var(--gray-500);
+    color: var(--gray-400);
+    display: block;
+    margin-top: 4px;
 }
 
 .stat-divider {
@@ -451,17 +454,20 @@ ul {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 350px;
+    min-height: 400px;
 }
 
 .tank-illustration {
     position: relative;
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .gas-tank {
-    width: 180px;
-    height: auto;
+    width: 200px;
+    height: 350px;
     filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.4));
     animation: float 6s ease-in-out infinite;
 }
@@ -1039,6 +1045,12 @@ ul {
     .hero-visual {
         order: 0;
         margin-bottom: 40px;
+        min-height: 320px;
+    }
+
+    .gas-tank {
+        width: 160px;
+        height: 280px;
     }
 
     .hero-subtitle {
@@ -1118,12 +1130,13 @@ ul {
     }
 
     .hero-visual {
-        min-height: 280px;
+        min-height: 260px;
         margin-bottom: 20px;
     }
 
     .gas-tank {
         width: 140px;
+        height: 240px;
     }
 
     .feature-card {
@@ -1205,11 +1218,12 @@ ul {
     }
 
     .hero-visual {
-        min-height: 240px;
+        min-height: 220px;
     }
 
     .gas-tank {
         width: 120px;
+        height: 200px;
     }
 }
 
