@@ -1,0 +1,1337 @@
+// ============================================
+// EVADMS Prisma Schema
+// EVA Gas Depot Management System
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & ACCESS CONTROL
+// ============================================
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  passwordHash         String    @map("password_hash")
+  firstName            String    @map("first_name")
+  lastName             String    @map("last_name")
+  phone                String?
+  status               UserStatus @default(active)
+  emailVerified        Boolean   @default(false) @map("email_verified")
+  lastLoginAt          DateTime? @map("last_login_at")
+  passwordChangedAt    DateTime? @map("password_changed_at")
+  failedLoginAttempts  Int       @default(0) @map("failed_login_attempts")
+  lockedUntil          DateTime? @map("locked_until")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  createdById          String?   @map("created_by")
+  updatedById          String?   @map("updated_by")
+
+  // Relations
+  roles                UserRole[]
+  refreshTokens        RefreshToken[]
+  driver               Driver?
+
+  // Self-referential
+  createdBy            User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers         User[]    @relation("UserCreatedBy")
+  updatedBy            User?     @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+  updatedUsers         User[]    @relation("UserUpdatedBy")
+
+  // Created records
+  customersCreated     Customer[] @relation("CustomerCreatedBy")
+  customersUpdated     Customer[] @relation("CustomerUpdatedBy")
+  quotesCreated        Quote[]    @relation("QuoteCreatedBy")
+  quotesUpdated        Quote[]    @relation("QuoteUpdatedBy")
+  ordersCreated        Order[]    @relation("OrderCreatedBy")
+  ordersUpdated        Order[]    @relation("OrderUpdatedBy")
+  ordersCompleted      Order[]    @relation("OrderCompletedBy")
+  runsCreated          ScheduleRun[] @relation("RunCreatedBy")
+  checklistsApproved   ChecklistTemplate[] @relation("ChecklistApprovedBy")
+  checklistsCreated    ChecklistTemplate[] @relation("ChecklistCreatedBy")
+  responsesCompleted   ChecklistResponse[] @relation("ResponseCompletedBy")
+  responseItemsAnswered ChecklistResponseItem[] @relation("ItemAnsweredBy")
+  podsCreated          PODData[]  @relation("PODCapturedBy")
+  movementsRecorded    CylinderMovement[] @relation("MovementRecordedBy")
+  variancesApproved    CylinderMovement[] @relation("VarianceApprovedBy")
+  countsCreated        DailyCylinderCount[] @relation("CountCreatedBy")
+  countsApproved       DailyCylinderCount[] @relation("CountApprovedBy")
+  batchesCreated       CylinderRefillBatch[] @relation("BatchCreatedBy")
+  batchesInspected     CylinderRefillBatch[] @relation("BatchInspectedBy")
+  batchesFilled        CylinderRefillBatch[] @relation("BatchFilledBy")
+  batchesQC            CylinderRefillBatch[] @relation("BatchQCBy")
+  batchesStocked       CylinderRefillBatch[] @relation("BatchStockedBy")
+  vehicleChecks        VehicleCheck[] @relation("CheckDriver")
+  vehicleChecksSignedOff VehicleCheck[] @relation("CheckSignedOffBy")
+  tankReadingsRecorded TankReading[] @relation("ReadingRecordedBy")
+  tankReadingsLast     Tank[] @relation("TankLastReadingBy")
+  bulkMovementsRecorded BulkMovement[] @relation("BulkMovementRecordedBy")
+  bulkVariancesApproved BulkMovement[] @relation("BulkVarianceApprovedBy")
+  attachmentsUploaded  Attachment[] @relation("AttachmentUploadedBy")
+  notificationsLogged  NotificationLog[] @relation("NotificationLoggedBy")
+
+  @@map("users")
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  displayName String    @map("display_name")
+  description String?
+  isSystem    Boolean   @default(false) @map("is_system")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  resource    String
+  action      String
+  description String?
+
+  // Relations
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId     String   @map("user_id")
+  roleId     String   @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String?  @map("assigned_by")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @map("token_hash")
+  deviceInfo Json?     @map("device_info")
+  expiresAt  DateTime  @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// CUSTOMERS & SITES
+// ============================================
+
+model Customer {
+  id                     String         @id @default(uuid())
+  accountNumber          String         @unique @map("account_number")
+  companyName            String?        @map("company_name")
+  customerType           CustomerType   @map("customer_type")
+  primaryContactName     String?        @map("primary_contact_name")
+  primaryPhone           String?        @map("primary_phone")
+  primaryEmail           String?        @map("primary_email")
+  vatNumber              String?        @map("vat_number")
+  registrationNumber     String?        @map("registration_number")
+  pricingTierId          String?        @map("pricing_tier_id")
+  discountPercentage     Decimal        @default(0) @map("discount_percentage") @db.Decimal(5,2)
+  creditLimit            Decimal        @default(0) @map("credit_limit") @db.Decimal(12,2)
+  paymentTermsDays       Int            @default(0) @map("payment_terms_days")
+  currentBalance         Decimal        @default(0) @map("current_balance") @db.Decimal(12,2)
+  commEmail              Boolean        @default(true) @map("comm_email")
+  commSms                Boolean        @default(true) @map("comm_sms")
+  commWhatsapp           Boolean        @default(true) @map("comm_whatsapp")
+  preferredContactMethod String         @default("phone") @map("preferred_contact_method")
+  status                 CustomerStatus @default(active)
+  notes                  String?
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  createdById            String?        @map("created_by")
+  updatedById            String?        @map("updated_by")
+
+  // Relations
+  pricingTier            PricingTier?   @relation(fields: [pricingTierId], references: [id])
+  createdBy              User?          @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedBy              User?          @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  sites                  CustomerSite[]
+  contacts               CustomerContact[]
+  quotes                 Quote[]
+  orders                 Order[]
+  customerPrices         CustomerPrice[]
+
+  @@index([accountNumber])
+  @@index([customerType])
+  @@index([status])
+  @@map("customers")
+}
+
+enum CustomerType {
+  retail
+  b2b
+  wholesale
+}
+
+enum CustomerStatus {
+  active
+  inactive
+  on_hold
+  blacklisted
+}
+
+model CustomerSite {
+  id                      String   @id @default(uuid())
+  customerId              String   @map("customer_id")
+  siteName                String?  @map("site_name")
+  isPrimary               Boolean  @default(false) @map("is_primary")
+  streetAddress           String   @map("street_address")
+  suburb                  String?
+  city                    String
+  province                String
+  postalCode              String?  @map("postal_code")
+  latitude                Decimal? @db.Decimal(10,8)
+  longitude               Decimal? @db.Decimal(11,8)
+  deliveryInstructions    String?  @map("delivery_instructions")
+  accessRequirements      String?  @map("access_requirements")
+  preferredDeliveryWindow Json?    @map("preferred_delivery_window")
+  siteContactName         String?  @map("site_contact_name")
+  siteContactPhone        String?  @map("site_contact_phone")
+  status                  String   @default("active")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  customer                Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  quotes                  Quote[]
+  orders                  Order[]
+
+  @@index([customerId])
+  @@map("customer_sites")
+}
+
+model CustomerContact {
+  id                     String   @id @default(uuid())
+  customerId             String   @map("customer_id")
+  name                   String
+  role                   String?
+  phone                  String?
+  email                  String?
+  isPrimary              Boolean  @default(false) @map("is_primary")
+  receivesInvoices       Boolean  @default(false) @map("receives_invoices")
+  receivesDeliveryUpdates Boolean @default(false) @map("receives_delivery_updates")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  customer               Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("customer_contacts")
+}
+
+// ============================================
+// PRODUCTS & PRICING
+// ============================================
+
+model Product {
+  id              String      @id @default(uuid())
+  sku             String      @unique
+  name            String
+  description     String?
+  productType     ProductType @map("product_type")
+  cylinderSizeKg  Decimal?    @map("cylinder_size_kg") @db.Decimal(5,2)
+  unitPrice       Decimal     @map("unit_price") @db.Decimal(10,2)
+  unitOfMeasure   String      @map("unit_of_measure")
+  vatApplicable   Boolean     @default(true) @map("vat_applicable")
+  isActive        Boolean     @default(true) @map("is_active")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  tierPrices      TierPrice[]
+  customerPrices  CustomerPrice[]
+  quoteItems      QuoteItem[]
+  orderItems      OrderItem[]
+
+  @@index([productType])
+  @@index([sku])
+  @@map("products")
+}
+
+enum ProductType {
+  bulk_lpg
+  cylinder
+  delivery_fee
+  service
+}
+
+model PricingTier {
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  description        String?
+  discountPercentage Decimal  @default(0) @map("discount_percentage") @db.Decimal(5,2)
+  isDefault          Boolean  @default(false) @map("is_default")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  customers          Customer[]
+  tierPrices         TierPrice[]
+
+  @@map("pricing_tiers")
+}
+
+model TierPrice {
+  id            String      @id @default(uuid())
+  pricingTierId String      @map("pricing_tier_id")
+  productId     String      @map("product_id")
+  unitPrice     Decimal     @map("unit_price") @db.Decimal(10,2)
+  minQuantity   Int         @default(1) @map("min_quantity")
+
+  // Relations
+  pricingTier   PricingTier @relation(fields: [pricingTierId], references: [id], onDelete: Cascade)
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([pricingTierId, productId, minQuantity])
+  @@map("tier_prices")
+}
+
+model CustomerPrice {
+  id         String    @id @default(uuid())
+  customerId String    @map("customer_id")
+  productId  String    @map("product_id")
+  unitPrice  Decimal   @map("unit_price") @db.Decimal(10,2)
+  validFrom  DateTime  @map("valid_from") @db.Date
+  validTo    DateTime? @map("valid_to") @db.Date
+  approvedBy String?   @map("approved_by")
+  approvedAt DateTime? @map("approved_at")
+  notes      String?
+
+  // Relations
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId, validFrom])
+  @@index([customerId])
+  @@map("customer_prices")
+}
+
+// ============================================
+// QUOTES & ORDERS
+// ============================================
+
+model Quote {
+  id                  String      @id @default(uuid())
+  quoteNumber         String      @unique @map("quote_number")
+  customerId          String?     @map("customer_id")
+  prospectName        String?     @map("prospect_name")
+  prospectPhone       String?     @map("prospect_phone")
+  prospectEmail       String?     @map("prospect_email")
+  siteId              String?     @map("site_id")
+  deliveryAddressText String?     @map("delivery_address_text")
+  subtotal            Decimal     @default(0) @db.Decimal(12,2)
+  vatAmount           Decimal     @default(0) @map("vat_amount") @db.Decimal(12,2)
+  total               Decimal     @default(0) @db.Decimal(12,2)
+  status              QuoteStatus @default(draft)
+  issuedDate          DateTime?   @map("issued_date") @db.Date
+  validUntil          DateTime?   @map("valid_until") @db.Date
+  convertedToOrderId  String?     @map("converted_to_order_id")
+  rejectionReason     String?     @map("rejection_reason")
+  notes               String?
+  internalNotes       String?     @map("internal_notes")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+  createdById         String?     @map("created_by")
+  updatedById         String?     @map("updated_by")
+
+  // Relations
+  customer            Customer?   @relation(fields: [customerId], references: [id])
+  site                CustomerSite? @relation(fields: [siteId], references: [id])
+  createdBy           User?       @relation("QuoteCreatedBy", fields: [createdById], references: [id])
+  updatedBy           User?       @relation("QuoteUpdatedBy", fields: [updatedById], references: [id])
+  items               QuoteItem[]
+  order               Order?      @relation("QuoteToOrder")
+
+  @@index([customerId])
+  @@index([status])
+  @@index([quoteNumber])
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  draft
+  sent
+  accepted
+  rejected
+  expired
+  converted
+}
+
+model QuoteItem {
+  id                 String   @id @default(uuid())
+  quoteId            String   @map("quote_id")
+  productId          String   @map("product_id")
+  description        String?
+  quantity           Decimal  @db.Decimal(10,2)
+  unitPrice          Decimal  @map("unit_price") @db.Decimal(10,2)
+  discountPercentage Decimal  @default(0) @map("discount_percentage") @db.Decimal(5,2)
+  lineTotal          Decimal  @map("line_total") @db.Decimal(12,2)
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  quote              Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product            Product  @relation(fields: [productId], references: [id])
+
+  @@index([quoteId])
+  @@map("quote_items")
+}
+
+model Order {
+  id                   String        @id @default(uuid())
+  orderNumber          String        @unique @map("order_number")
+  customerId           String        @map("customer_id")
+  siteId               String        @map("site_id")
+  quoteId              String?       @unique @map("quote_id")
+  orderType            OrderType     @map("order_type")
+  requestedDate        DateTime?     @map("requested_date") @db.Date
+  requestedWindow      Json?         @map("requested_window")
+  scheduledDate        DateTime?     @map("scheduled_date") @db.Date
+  scheduledRouteId     String?       @map("scheduled_route_id")
+  subtotal             Decimal       @default(0) @db.Decimal(12,2)
+  vatAmount            Decimal       @default(0) @map("vat_amount") @db.Decimal(12,2)
+  deliveryFee          Decimal       @default(0) @map("delivery_fee") @db.Decimal(10,2)
+  total                Decimal       @default(0) @db.Decimal(12,2)
+  paymentMethod        PaymentMethod? @map("payment_method")
+  paymentStatus        PaymentStatus @default(pending) @map("payment_status")
+  status               OrderStatus   @default(created)
+  deliveryInstructions String?       @map("delivery_instructions")
+  specialRequirements  String?       @map("special_requirements")
+  completedAt          DateTime?     @map("completed_at")
+  completedById        String?       @map("completed_by")
+  exceptionType        String?       @map("exception_type")
+  exceptionNotes       String?       @map("exception_notes")
+  notes                String?
+  internalNotes        String?       @map("internal_notes")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+  createdById          String?       @map("created_by")
+  updatedById          String?       @map("updated_by")
+
+  // Relations
+  customer             Customer      @relation(fields: [customerId], references: [id])
+  site                 CustomerSite  @relation(fields: [siteId], references: [id])
+  quote                Quote?        @relation("QuoteToOrder", fields: [quoteId], references: [id])
+  scheduledRoute       ScheduleRun?  @relation(fields: [scheduledRouteId], references: [id])
+  createdBy            User?         @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedBy            User?         @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
+  completedBy          User?         @relation("OrderCompletedBy", fields: [completedById], references: [id])
+  items                OrderItem[]
+  routeStop            RouteStop?
+  pod                  PODData?
+  checklistResponses   ChecklistResponse[]
+  cylinderMovements    CylinderMovement[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([orderNumber])
+  @@index([scheduledRouteId])
+  @@map("orders")
+}
+
+enum OrderType {
+  cylinder_delivery
+  bulk_delivery
+  cylinder_pickup
+  wholesale_pickup
+}
+
+enum PaymentMethod {
+  cod
+  eft
+  account
+  card
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  partial
+  overdue
+}
+
+enum OrderStatus {
+  created
+  scheduled
+  prepared
+  loading
+  dispatched
+  in_transit
+  arrived
+  delivered
+  partial_delivery
+  failed
+  cancelled
+  closed
+}
+
+model OrderItem {
+  id                String   @id @default(uuid())
+  orderId           String   @map("order_id")
+  productId         String   @map("product_id")
+  quantityOrdered   Decimal  @map("quantity_ordered") @db.Decimal(10,2)
+  quantityDelivered Decimal  @default(0) @map("quantity_delivered") @db.Decimal(10,2)
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(10,2)
+  lineTotal         Decimal  @map("line_total") @db.Decimal(12,2)
+  emptiesExpected   Int      @default(0) @map("empties_expected")
+  emptiesCollected  Int      @default(0) @map("empties_collected")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ============================================
+// SCHEDULING & DISPATCH
+// ============================================
+
+model Vehicle {
+  id                   String        @id @default(uuid())
+  registrationNumber   String        @unique @map("registration_number")
+  vehicleType          VehicleType   @map("vehicle_type")
+  make                 String?
+  model                String?
+  year                 Int?
+  bulkCapacityLitres   Decimal?      @map("bulk_capacity_litres") @db.Decimal(10,2)
+  cylinderCapacityUnits Int?         @map("cylinder_capacity_units")
+  licenseExpiry        DateTime?     @map("license_expiry") @db.Date
+  roadworthyExpiry     DateTime?     @map("roadworthy_expiry") @db.Date
+  insuranceExpiry      DateTime?     @map("insurance_expiry") @db.Date
+  status               VehicleStatus @default(available)
+  currentOdometer      Int?          @map("current_odometer")
+  notes                String?
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  preferredByDrivers   Driver[]
+  scheduleRuns         ScheduleRun[]
+  vehicleChecks        VehicleCheck[]
+
+  @@index([vehicleType])
+  @@index([status])
+  @@map("vehicles")
+}
+
+enum VehicleType {
+  bulk_tanker
+  cylinder_truck
+  van
+  bakkie
+}
+
+enum VehicleStatus {
+  available
+  in_use
+  maintenance
+  out_of_service
+}
+
+model Driver {
+  id                 String       @id @default(uuid())
+  userId             String       @unique @map("user_id")
+  employeeNumber     String?      @unique @map("employee_number")
+  licenseNumber      String       @map("license_number")
+  licenseCode        String       @map("license_code")
+  licenseExpiry      DateTime     @map("license_expiry") @db.Date
+  pdpNumber          String?      @map("pdp_number")
+  pdpExpiry          DateTime?    @map("pdp_expiry") @db.Date
+  hazmatCertified    Boolean      @default(false) @map("hazmat_certified")
+  hazmatCertExpiry   DateTime?    @map("hazmat_cert_expiry") @db.Date
+  status             DriverStatus @default(active)
+  preferredVehicleId String?      @map("preferred_vehicle_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  user               User         @relation(fields: [userId], references: [id])
+  preferredVehicle   Vehicle?     @relation(fields: [preferredVehicleId], references: [id])
+  scheduleRuns       ScheduleRun[]
+  vehicleChecks      VehicleCheck[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("drivers")
+}
+
+enum DriverStatus {
+  active
+  on_leave
+  suspended
+  inactive
+}
+
+model VehicleCheck {
+  id                  String         @id @default(uuid())
+  vehicleId           String         @map("vehicle_id")
+  driverId            String         @map("driver_id")
+  checkType           VehicleCheckType @map("check_type")
+  checkDate           DateTime       @map("check_date") @db.Date
+  odometerReading     Int?           @map("odometer_reading")
+  checklistResponseId String?        @map("checklist_response_id")
+  passed              Boolean
+  issuesFound         String?        @map("issues_found")
+  signedOffAt         DateTime?      @map("signed_off_at")
+  signedOffById       String?        @map("signed_off_by")
+  createdAt           DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  vehicle             Vehicle        @relation(fields: [vehicleId], references: [id])
+  driver              Driver         @relation(fields: [driverId], references: [id])
+  signedOffBy         User?          @relation("CheckSignedOffBy", fields: [signedOffById], references: [id])
+  driverUser          User           @relation("CheckDriver", fields: [driverId], references: [id])
+
+  @@index([vehicleId])
+  @@index([checkDate])
+  @@map("vehicle_checks")
+}
+
+enum VehicleCheckType {
+  pre_trip
+  post_trip
+  safety
+}
+
+model ScheduleRun {
+  id               String    @id @default(uuid())
+  runDate          DateTime  @map("run_date") @db.Date
+  runNumber        String    @unique @map("run_number")
+  driverId         String?   @map("driver_id")
+  vehicleId        String?   @map("vehicle_id")
+  runType          RunType   @map("run_type")
+  status           RunStatus @default(planned)
+  plannedStartTime String?   @map("planned_start_time")
+  actualStartTime  DateTime? @map("actual_start_time")
+  actualEndTime    DateTime? @map("actual_end_time")
+  totalStops       Int       @default(0) @map("total_stops")
+  completedStops   Int       @default(0) @map("completed_stops")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdById      String?   @map("created_by")
+
+  // Relations
+  driver           Driver?   @relation(fields: [driverId], references: [id])
+  vehicle          Vehicle?  @relation(fields: [vehicleId], references: [id])
+  createdBy        User?     @relation("RunCreatedBy", fields: [createdById], references: [id])
+  stops            RouteStop[]
+  orders           Order[]
+
+  @@index([runDate])
+  @@index([driverId])
+  @@index([status])
+  @@map("schedule_runs")
+}
+
+enum RunType {
+  delivery
+  collection
+  mixed
+}
+
+enum RunStatus {
+  planned
+  ready
+  in_progress
+  completed
+  cancelled
+}
+
+model RouteStop {
+  id                       String          @id @default(uuid())
+  runId                    String          @map("run_id")
+  orderId                  String          @unique @map("order_id")
+  sequenceNumber           Int             @map("sequence_number")
+  estimatedArrival         String?         @map("estimated_arrival")
+  estimatedDurationMinutes Int             @default(15) @map("estimated_duration_minutes")
+  actualArrival            DateTime?       @map("actual_arrival")
+  actualDeparture          DateTime?       @map("actual_departure")
+  status                   RouteStopStatus @default(pending)
+  distanceKm               Decimal?        @map("distance_km") @db.Decimal(8,2)
+  notes                    String?
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  run                      ScheduleRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  order                    Order           @relation(fields: [orderId], references: [id])
+  pod                      PODData?
+  cylinderMovements        CylinderMovement[]
+
+  @@index([runId])
+  @@unique([runId, sequenceNumber])
+  @@map("route_stops")
+}
+
+enum RouteStopStatus {
+  pending
+  en_route
+  arrived
+  completed
+  skipped
+  failed
+}
+
+// ============================================
+// PROOF OF DELIVERY
+// ============================================
+
+model PODData {
+  id                    String    @id @default(uuid())
+  orderId               String    @unique @map("order_id")
+  routeStopId           String?   @unique @map("route_stop_id")
+  arrivalTime           DateTime? @map("arrival_time")
+  completionTime        DateTime  @map("completion_time")
+  gpsLatitude           Decimal?  @map("gps_latitude") @db.Decimal(10,8)
+  gpsLongitude          Decimal?  @map("gps_longitude") @db.Decimal(11,8)
+  gpsAccuracyMeters     Decimal?  @map("gps_accuracy_meters") @db.Decimal(8,2)
+  signatureCaptured     Boolean   @default(false) @map("signature_captured")
+  signatoryName         String?   @map("signatory_name")
+  signatoryDesignation  String?   @map("signatory_designation")
+  signatureAttachmentId String?   @map("signature_attachment_id")
+  outcome               PODOutcome
+  outcomeNotes          String?   @map("outcome_notes")
+  receivedByName        String?   @map("received_by_name")
+  receivedByPhone       String?   @map("received_by_phone")
+  driverNotes           String?   @map("driver_notes")
+  deviceId              String?   @map("device_id")
+  appVersion            String?   @map("app_version")
+  capturedById          String    @map("captured_by")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  order                 Order     @relation(fields: [orderId], references: [id])
+  routeStop             RouteStop? @relation(fields: [routeStopId], references: [id])
+  capturedBy            User      @relation("PODCapturedBy", fields: [capturedById], references: [id])
+  photos                PODPhoto[]
+
+  @@index([completionTime])
+  @@map("pod_data")
+}
+
+enum PODOutcome {
+  delivered
+  partial
+  refused
+  no_access
+  not_home
+  other
+}
+
+model PODPhoto {
+  id             String       @id @default(uuid())
+  podId          String       @map("pod_id")
+  photoType      PODPhotoType @map("photo_type")
+  attachmentId   String       @map("attachment_id")
+  caption        String?
+  sequenceNumber Int          @default(0) @map("sequence_number")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  pod            PODData      @relation(fields: [podId], references: [id], onDelete: Cascade)
+
+  @@index([podId])
+  @@map("pod_photos")
+}
+
+enum PODPhotoType {
+  delivery_location
+  product_placement
+  damage
+  signature
+  other
+}
+
+// ============================================
+// INVENTORY - CYLINDERS
+// ============================================
+
+model CylinderStockSummary {
+  id           String         @id @default(uuid())
+  cylinderSize CylinderSize   @map("cylinder_size")
+  status       CylinderStatus
+  quantity     Int            @default(0)
+  lastUpdated  DateTime       @default(now()) @map("last_updated")
+
+  @@unique([cylinderSize, status])
+  @@index([cylinderSize])
+  @@index([status])
+  @@map("cylinder_stock_summary")
+}
+
+enum CylinderSize {
+  kg9   @map("9kg")
+  kg14  @map("14kg")
+  kg19  @map("19kg")
+  kg48  @map("48kg")
+}
+
+enum CylinderStatus {
+  full
+  empty
+  quarantine
+  maintenance
+  issued
+  in_transit
+  at_customer
+}
+
+model CylinderMovement {
+  id                   String               @id @default(uuid())
+  movementRef          String               @unique @map("movement_ref")
+  cylinderSize         CylinderSize         @map("cylinder_size")
+  movementType         CylinderMovementType @map("movement_type")
+  fromStatus           CylinderStatus?      @map("from_status")
+  toStatus             CylinderStatus       @map("to_status")
+  quantity             Int
+  orderId              String?              @map("order_id")
+  refillBatchId        String?              @map("refill_batch_id")
+  routeStopId          String?              @map("route_stop_id")
+  reason               String?
+  varianceApproved     Boolean?             @map("variance_approved")
+  varianceApprovedById String?              @map("variance_approved_by")
+  varianceApprovedAt   DateTime?            @map("variance_approved_at")
+  checklistResponseId  String?              @map("checklist_response_id")
+  notes                String?
+  recordedAt           DateTime             @map("recorded_at")
+  recordedById         String               @map("recorded_by")
+  createdAt            DateTime             @default(now()) @map("created_at")
+
+  // Relations
+  order                Order?               @relation(fields: [orderId], references: [id])
+  refillBatch          CylinderRefillBatch? @relation(fields: [refillBatchId], references: [id])
+  routeStop            RouteStop?           @relation(fields: [routeStopId], references: [id])
+  recordedBy           User                 @relation("MovementRecordedBy", fields: [recordedById], references: [id])
+  varianceApprovedBy   User?                @relation("VarianceApprovedBy", fields: [varianceApprovedById], references: [id])
+
+  @@index([cylinderSize])
+  @@index([movementType])
+  @@index([recordedAt])
+  @@index([orderId])
+  @@map("cylinder_movements_ledger")
+}
+
+enum CylinderMovementType {
+  receive_empty
+  refill
+  issue
+  deliver
+  collect_empty
+  return_full
+  quarantine
+  release_quarantine
+  maintenance
+  release_maintenance
+  scrap
+  purchase
+  adjustment
+  transfer_in
+  transfer_out
+}
+
+model CylinderRefillBatch {
+  id                 String            @id @default(uuid())
+  batchRef           String            @unique @map("batch_ref")
+  cylinderSize       CylinderSize      @map("cylinder_size")
+  quantity           Int
+  status             RefillBatchStatus @default(created)
+  preFillChecklistId String?           @map("pre_fill_checklist_id")
+  inspectedAt        DateTime?         @map("inspected_at")
+  inspectedById      String?           @map("inspected_by")
+  fillStationId      String?           @map("fill_station_id")
+  fillStartedAt      DateTime?         @map("fill_started_at")
+  fillCompletedAt    DateTime?         @map("fill_completed_at")
+  filledById         String?           @map("filled_by")
+  qcChecklistId      String?           @map("qc_checklist_id")
+  qcAt               DateTime?         @map("qc_at")
+  qcById             String?           @map("qc_by")
+  passedCount        Int               @default(0) @map("passed_count")
+  failedCount        Int               @default(0) @map("failed_count")
+  stockedAt          DateTime?         @map("stocked_at")
+  stockedById        String?           @map("stocked_by")
+  issueMovementId    String?           @map("issue_movement_id")
+  stockMovementId    String?           @map("stock_movement_id")
+  notes              String?
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdById        String?           @map("created_by")
+
+  // Relations
+  createdBy          User?             @relation("BatchCreatedBy", fields: [createdById], references: [id])
+  inspectedBy        User?             @relation("BatchInspectedBy", fields: [inspectedById], references: [id])
+  filledBy           User?             @relation("BatchFilledBy", fields: [filledById], references: [id])
+  qcBy               User?             @relation("BatchQCBy", fields: [qcById], references: [id])
+  stockedBy          User?             @relation("BatchStockedBy", fields: [stockedById], references: [id])
+  movements          CylinderMovement[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("cylinder_refill_batches")
+}
+
+enum RefillBatchStatus {
+  created
+  inspecting
+  filling
+  qc
+  passed
+  failed
+  stocked
+}
+
+model DailyCylinderCount {
+  id                  String      @id @default(uuid())
+  countDate           DateTime    @map("count_date") @db.Date
+  cylinderSize        CylinderSize @map("cylinder_size")
+  status              CylinderStatus
+  systemQuantity      Int         @map("system_quantity")
+  physicalQuantity    Int         @map("physical_quantity")
+  variance            Int
+  varianceStatus      VarianceStatus @default(pending) @map("variance_status")
+  investigationNotes  String?     @map("investigation_notes")
+  countedById         String      @map("counted_by")
+  countedAt           DateTime    @map("counted_at")
+  approvedById        String?     @map("approved_by")
+  approvedAt          DateTime?   @map("approved_at")
+  adjustmentMovementId String?    @map("adjustment_movement_id")
+  createdAt           DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  countedBy           User        @relation("CountCreatedBy", fields: [countedById], references: [id])
+  approvedBy          User?       @relation("CountApprovedBy", fields: [approvedById], references: [id])
+
+  @@unique([countDate, cylinderSize, status])
+  @@index([countDate])
+  @@map("daily_cylinder_counts")
+}
+
+enum VarianceStatus {
+  pending
+  investigating
+  approved
+  adjusted
+}
+
+// ============================================
+// INVENTORY - BULK TANKS (Phase 2)
+// ============================================
+
+model Tank {
+  id                  String      @id @default(uuid())
+  tankCode            String      @unique @map("tank_code")
+  name                String
+  locationDescription String?     @map("location_description")
+  capacityLitres      Decimal     @map("capacity_litres") @db.Decimal(12,2)
+  minLevelLitres      Decimal     @map("min_level_litres") @db.Decimal(12,2)
+  reorderLevelLitres  Decimal?    @map("reorder_level_litres") @db.Decimal(12,2)
+  currentLevelLitres  Decimal     @default(0) @map("current_level_litres") @db.Decimal(12,2)
+  lastReadingAt       DateTime?   @map("last_reading_at")
+  lastReadingById     String?     @map("last_reading_by")
+  calibrationDate     DateTime?   @map("calibration_date") @db.Date
+  calibrationDue      DateTime?   @map("calibration_due") @db.Date
+  status              TankStatus  @default(active)
+  notes               String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  lastReadingBy       User?       @relation("TankLastReadingBy", fields: [lastReadingById], references: [id])
+  readings            TankReading[]
+  movements           BulkMovement[]
+
+  @@map("tanks")
+}
+
+enum TankStatus {
+  active
+  maintenance
+  out_of_service
+}
+
+model TankReading {
+  id                     String          @id @default(uuid())
+  tankId                 String          @map("tank_id")
+  readingTime            DateTime        @map("reading_time")
+  levelLitres            Decimal         @map("level_litres") @db.Decimal(12,2)
+  levelPercentage        Decimal?        @map("level_percentage") @db.Decimal(5,2)
+  readingType            TankReadingType @map("reading_type")
+  temperatureCelsius     Decimal?        @map("temperature_celsius") @db.Decimal(5,2)
+  compensatedLevelLitres Decimal?        @map("compensated_level_litres") @db.Decimal(12,2)
+  notes                  String?
+  recordedById           String          @map("recorded_by")
+  createdAt              DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  tank                   Tank            @relation(fields: [tankId], references: [id])
+  recordedBy             User            @relation("ReadingRecordedBy", fields: [recordedById], references: [id])
+  movementsBefore        BulkMovement[]  @relation("ReadingBefore")
+  movementsAfter         BulkMovement[]  @relation("ReadingAfter")
+
+  @@index([tankId])
+  @@index([readingTime])
+  @@map("tank_readings")
+}
+
+enum TankReadingType {
+  scheduled
+  pre_transfer
+  post_transfer
+  spot_check
+}
+
+model BulkMovement {
+  id                    String           @id @default(uuid())
+  movementRef           String           @unique @map("movement_ref")
+  tankId                String           @map("tank_id")
+  movementType          BulkMovementType @map("movement_type")
+  quantityLitres        Decimal          @map("quantity_litres") @db.Decimal(12,2)
+  openingMeterReading   Decimal?         @map("opening_meter_reading") @db.Decimal(12,2)
+  closingMeterReading   Decimal?         @map("closing_meter_reading") @db.Decimal(12,2)
+  tankReadingBeforeId   String?          @map("tank_reading_before_id")
+  tankReadingAfterId    String?          @map("tank_reading_after_id")
+  expectedQuantityLitres Decimal?        @map("expected_quantity_litres") @db.Decimal(12,2)
+  varianceLitres        Decimal?         @map("variance_litres") @db.Decimal(12,2)
+  variancePercentage    Decimal?         @map("variance_percentage") @db.Decimal(5,2)
+  varianceApproved      Boolean?         @map("variance_approved")
+  varianceApprovedById  String?          @map("variance_approved_by")
+  varianceApprovedAt    DateTime?        @map("variance_approved_at")
+  varianceNotes         String?          @map("variance_notes")
+  sourceType            String?          @map("source_type")
+  sourceReference       String?          @map("source_reference")
+  destinationType       String?          @map("destination_type")
+  destinationReference  String?          @map("destination_reference")
+  receivingRecordId     String?          @map("receiving_record_id")
+  orderId               String?          @map("order_id")
+  checklistResponseId   String?          @map("checklist_response_id")
+  notes                 String?
+  recordedAt            DateTime         @map("recorded_at")
+  recordedById          String           @map("recorded_by")
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  tank                  Tank             @relation(fields: [tankId], references: [id])
+  tankReadingBefore     TankReading?     @relation("ReadingBefore", fields: [tankReadingBeforeId], references: [id])
+  tankReadingAfter      TankReading?     @relation("ReadingAfter", fields: [tankReadingAfterId], references: [id])
+  recordedBy            User             @relation("BulkMovementRecordedBy", fields: [recordedById], references: [id])
+  varianceApprovedBy    User?            @relation("BulkVarianceApprovedBy", fields: [varianceApprovedById], references: [id])
+
+  @@index([tankId])
+  @@index([movementType])
+  @@index([recordedAt])
+  @@map("bulk_movements_ledger")
+}
+
+enum BulkMovementType {
+  inbound
+  outbound
+  adjustment
+  transfer
+}
+
+// ============================================
+// CHECKLISTS
+// ============================================
+
+model ChecklistTemplate {
+  id              String              @id @default(uuid())
+  code            String              @unique
+  name            String
+  description     String?
+  templateType    ChecklistType       @map("template_type")
+  isMandatory     Boolean             @default(true) @map("is_mandatory")
+  blocksOnFailure Boolean             @default(false) @map("blocks_on_failure")
+  version         Int                 @default(1)
+  status          ChecklistTemplateStatus @default(draft)
+  approvedById    String?             @map("approved_by")
+  approvedAt      DateTime?           @map("approved_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  createdById     String?             @map("created_by")
+
+  // Relations
+  approvedBy      User?               @relation("ChecklistApprovedBy", fields: [approvedById], references: [id])
+  createdBy       User?               @relation("ChecklistCreatedBy", fields: [createdById], references: [id])
+  items           ChecklistItem[]
+  responses       ChecklistResponse[]
+
+  @@index([templateType])
+  @@index([status])
+  @@map("checklist_templates")
+}
+
+enum ChecklistType {
+  bulk_receiving
+  loading
+  delivery
+  vehicle_check
+  refill_pre
+  refill_qc
+  safety
+  audit
+  custom
+}
+
+enum ChecklistTemplateStatus {
+  draft
+  active
+  archived
+}
+
+model ChecklistItem {
+  id                  String            @id @default(uuid())
+  templateId          String            @map("template_id")
+  sequenceNumber      Int               @map("sequence_number")
+  questionText        String            @map("question_text")
+  helpText            String?           @map("help_text")
+  itemType            ChecklistItemType @map("item_type")
+  options             Json?
+  isMandatory         Boolean           @default(true) @map("is_mandatory")
+  isCritical          Boolean           @default(false) @map("is_critical")
+  conditionalOnItemId String?           @map("conditional_on_item_id")
+  conditionalValue    String?           @map("conditional_value")
+  expectedRangeMin    Decimal?          @map("expected_range_min") @db.Decimal(10,2)
+  expectedRangeMax    Decimal?          @map("expected_range_max") @db.Decimal(10,2)
+  unitOfMeasure       String?           @map("unit_of_measure")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  template            ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  conditionalOnItem   ChecklistItem?    @relation("ConditionalItems", fields: [conditionalOnItemId], references: [id])
+  dependentItems      ChecklistItem[]   @relation("ConditionalItems")
+  responses           ChecklistResponseItem[]
+
+  @@index([templateId])
+  @@map("checklist_items")
+}
+
+enum ChecklistItemType {
+  yes_no
+  yes_no_na
+  text
+  number
+  photo
+  signature
+  select
+  multi_select
+  date
+  time
+  reading
+}
+
+model ChecklistResponse {
+  id                    String                  @id @default(uuid())
+  responseRef           String                  @unique @map("response_ref")
+  templateId            String                  @map("template_id")
+  templateVersion       Int                     @map("template_version")
+  contextType           String                  @map("context_type")
+  contextId             String?                 @map("context_id")
+  startedAt             DateTime?               @map("started_at")
+  completedAt           DateTime?               @map("completed_at")
+  completedById         String                  @map("completed_by")
+  status                ChecklistResponseStatus @default(in_progress)
+  passed                Boolean?
+  failedCriticalCount   Int                     @default(0) @map("failed_critical_count")
+  failedNonCriticalCount Int                    @default(0) @map("failed_non_critical_count")
+  gpsLatitude           Decimal?                @map("gps_latitude") @db.Decimal(10,8)
+  gpsLongitude          Decimal?                @map("gps_longitude") @db.Decimal(11,8)
+  notes                 String?
+  createdAt             DateTime                @default(now()) @map("created_at")
+
+  // Relations
+  template              ChecklistTemplate       @relation(fields: [templateId], references: [id])
+  completedBy           User                    @relation("ResponseCompletedBy", fields: [completedById], references: [id])
+  items                 ChecklistResponseItem[]
+  order                 Order?                  @relation(fields: [contextId], references: [id])
+
+  @@index([templateId])
+  @@index([contextType, contextId])
+  @@index([completedAt])
+  @@map("checklist_responses")
+}
+
+enum ChecklistResponseStatus {
+  in_progress
+  completed
+  failed
+  abandoned
+}
+
+model ChecklistResponseItem {
+  id           String        @id @default(uuid())
+  responseId   String        @map("response_id")
+  itemId       String        @map("item_id")
+  answerValue  String?       @map("answer_value")
+  answerPassed Boolean?      @map("answer_passed")
+  numericValue Decimal?      @map("numeric_value") @db.Decimal(10,2)
+  isInRange    Boolean?      @map("is_in_range")
+  attachmentId String?       @map("attachment_id")
+  issueNotes   String?       @map("issue_notes")
+  answeredAt   DateTime      @default(now()) @map("answered_at")
+  answeredById String        @map("answered_by")
+
+  // Relations
+  response     ChecklistResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  item         ChecklistItem     @relation(fields: [itemId], references: [id])
+  answeredBy   User              @relation("ItemAnsweredBy", fields: [answeredById], references: [id])
+
+  @@index([responseId])
+  @@map("checklist_response_items")
+}
+
+// ============================================
+// ATTACHMENTS & AUDIT
+// ============================================
+
+model Attachment {
+  id               String   @id @default(uuid())
+  originalFilename String   @map("original_filename")
+  mimeType         String   @map("mime_type")
+  fileSizeBytes    BigInt   @map("file_size_bytes")
+  storageBucket    String   @map("storage_bucket")
+  storageKey       String   @map("storage_key")
+  entityType       String   @map("entity_type")
+  entityId         String   @map("entity_id")
+  description      String?
+  checksumSha256   String?  @map("checksum_sha256")
+  uploadedById     String   @map("uploaded_by")
+  uploadedAt       DateTime @default(now()) @map("uploaded_at")
+
+  // Relations
+  uploadedBy       User     @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([uploadedAt])
+  @@map("attachments")
+}
+
+model AuditEventLog {
+  id             String   @id @default(uuid())
+  eventType      String   @map("event_type")
+  eventSubtype   String?  @map("event_subtype")
+  action         String
+  actorId        String?  @map("actor_id")
+  actorEmail     String?  @map("actor_email")
+  actorRole      String?  @map("actor_role")
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  entityRef      String?  @map("entity_ref")
+  summary        String
+  details        Json?
+  previousState  Json?    @map("previous_state")
+  newState       Json?    @map("new_state")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  deviceId       String?  @map("device_id")
+  sessionId      String?  @map("session_id")
+  gpsLatitude    Decimal? @map("gps_latitude") @db.Decimal(10,8)
+  gpsLongitude   Decimal? @map("gps_longitude") @db.Decimal(11,8)
+  sequenceNumber BigInt   @default(autoincrement()) @map("sequence_number")
+  previousHash   String?  @map("previous_hash")
+  recordHash     String?  @map("record_hash")
+  occurredAt     DateTime @default(now()) @map("occurred_at")
+
+  @@index([eventType])
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([occurredAt])
+  @@index([sequenceNumber])
+  @@map("audit_event_log")
+}
+
+model NotificationLog {
+  id                String             @id @default(uuid())
+  recipientType     String             @map("recipient_type")
+  recipientId       String?            @map("recipient_id")
+  recipientContact  String             @map("recipient_contact")
+  channel           NotificationChannel
+  templateCode      String?            @map("template_code")
+  subject           String?
+  body              String
+  contextType       String?            @map("context_type")
+  contextId         String?            @map("context_id")
+  status            NotificationStatus @default(pending)
+  sentAt            DateTime?          @map("sent_at")
+  deliveredAt       DateTime?          @map("delivered_at")
+  failedAt          DateTime?          @map("failed_at")
+  failureReason     String?            @map("failure_reason")
+  externalMessageId String?            @map("external_message_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  createdById       String?            @map("created_by")
+
+  // Relations
+  createdBy         User?              @relation("NotificationLoggedBy", fields: [createdById], references: [id])
+
+  @@index([recipientType, recipientId])
+  @@index([status])
+  @@index([contextType, contextId])
+  @@map("notification_log")
+}
+
+enum NotificationChannel {
+  email
+  sms
+  whatsapp
+  push
+  in_app
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  delivered
+  failed
+  bounced
+}
