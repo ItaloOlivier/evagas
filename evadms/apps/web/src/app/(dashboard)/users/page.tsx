@@ -48,6 +48,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDateTime } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import { PageError } from '@/components/ui/error-display';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
   useUsers,
   useUserStats,
@@ -97,7 +99,7 @@ export default function UsersPage() {
   });
 
   // Queries
-  const { data: usersData, isLoading, error } = useUsers();
+  const { data: usersData, isLoading, error, refetch } = useUsers();
   const { data: stats } = useUserStats();
 
   // Mutations
@@ -127,10 +129,10 @@ export default function UsersPage() {
         phone: '',
         role: 'driver',
       });
-    } catch (error: any) {
+    } catch (err) {
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to create user',
+        description: getErrorMessage(err),
         variant: 'destructive',
       });
     }
@@ -144,10 +146,10 @@ export default function UsersPage() {
         title: 'Success',
         description: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
       });
-    } catch (error: any) {
+    } catch (err) {
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to update user',
+        description: getErrorMessage(err),
         variant: 'destructive',
       });
     }
@@ -155,14 +157,11 @@ export default function UsersPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <p className="text-destructive mb-2">Failed to load users</p>
-          <p className="text-sm text-muted-foreground">
-            {(error as any)?.message || 'Please try again later'}
-          </p>
-        </div>
-      </div>
+      <PageError
+        error={error}
+        title="Failed to load users"
+        onRetry={() => refetch()}
+      />
     );
   }
 

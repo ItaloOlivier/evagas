@@ -1,8 +1,102 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const API_BASE = `${API_URL}/api/v1`;
+
+// Custom API Error class with detailed information
+export class ApiError extends Error {
+  status: number;
+  statusText: string;
+  endpoint: string;
+  method: string;
+  requestData?: unknown;
+  responseData?: unknown;
+  timestamp: string;
+
+  constructor(
+    message: string,
+    status: number,
+    statusText: string,
+    endpoint: string,
+    method: string,
+    requestData?: unknown,
+    responseData?: unknown
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.statusText = statusText;
+    this.endpoint = endpoint;
+    this.method = method;
+    this.requestData = requestData;
+    this.responseData = responseData;
+    this.timestamp = new Date().toISOString();
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      status: this.status,
+      statusText: this.statusText,
+      endpoint: this.endpoint,
+      method: this.method,
+      requestData: this.requestData,
+      responseData: this.responseData,
+      timestamp: this.timestamp,
+    };
+  }
+
+  toString() {
+    return `[${this.timestamp}] ${this.method} ${this.endpoint} - ${this.status} ${this.statusText}: ${this.message}`;
+  }
+}
+
+// Error logging utility
+export function logApiError(error: ApiError) {
+  const errorInfo = error.toJSON();
+  console.group(`🚨 API Error: ${error.method} ${error.endpoint}`);
+  console.error('Status:', error.status, error.statusText);
+  console.error('Message:', error.message);
+  console.error('Timestamp:', error.timestamp);
+  if (error.requestData) {
+    console.error('Request Data:', error.requestData);
+  }
+  if (error.responseData) {
+    console.error('Response Data:', error.responseData);
+  }
+  console.error('Full Error Object:', errorInfo);
+  console.groupEnd();
+  return errorInfo;
+}
+
+// Parse error message from various response formats
+function parseErrorMessage(error: AxiosError): string {
+  const responseData = error.response?.data as Record<string, unknown> | undefined;
+
+  if (responseData) {
+    // NestJS format
+    if (typeof responseData.message === 'string') {
+      return responseData.message;
+    }
+    // NestJS validation errors (array of messages)
+    if (Array.isArray(responseData.message)) {
+      return responseData.message.join(', ');
+    }
+    // Generic error format
+    if (typeof responseData.error === 'string') {
+      return responseData.error;
+    }
+    // Prisma/DB errors
+    if (typeof responseData.meta === 'object' && responseData.meta !== null) {
+      const meta = responseData.meta as Record<string, unknown>;
+      if (meta.cause) return String(meta.cause);
+    }
+  }
+
+  return error.message || 'An unexpected error occurred';
+}
 
 export const api = axios.create({
   baseURL: API_BASE,
@@ -23,12 +117,33 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for token refresh
+// Response interceptor for token refresh and error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => {
+    // Log successful responses in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
+    // Create detailed ApiError
+    const apiError = new ApiError(
+      parseErrorMessage(error),
+      error.response?.status || 0,
+      error.response?.statusText || 'Network Error',
+      originalRequest?.url || 'unknown',
+      originalRequest?.method?.toUpperCase() || 'unknown',
+      originalRequest?.data ? JSON.parse(originalRequest.data as string || '{}') : undefined,
+      error.response?.data
+    );
+
+    // Always log the error
+    logApiError(apiError);
+
+    // Handle 401 - try token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -49,12 +164,13 @@ api.interceptors.response.use(
         } catch (refreshError) {
           useAuthStore.getState().logout();
           window.location.href = '/login';
-          return Promise.reject(refreshError);
+          return Promise.reject(apiError);
         }
       }
     }
 
-    return Promise.reject(error);
+    // Reject with our custom ApiError
+    return Promise.reject(apiError);
   }
 );
 
