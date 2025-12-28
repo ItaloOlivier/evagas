@@ -54,8 +54,8 @@ export class ChecklistsService {
         items: {
           orderBy: { sequenceNumber: 'asc' },
         },
-        createdByUser: { select: { firstName: true, lastName: true } },
-        approvedByUser: { select: { firstName: true, lastName: true } },
+        createdBy: { select: { firstName: true, lastName: true } },
+        approvedBy: { select: { firstName: true, lastName: true } },
       },
     });
 
@@ -161,7 +161,7 @@ export class ChecklistsService {
         description: dto.description,
         isMandatory: dto.isMandatory,
         blocksOnFailure: dto.blocksOnFailure,
-        updatedById,
+        updatedAt: new Date(),
       },
       include: {
         items: {
@@ -283,9 +283,8 @@ export class ChecklistsService {
       where: { id },
       data: {
         status: 'active',
-        approvedBy: approvedById,
+        approvedById: approvedById,
         approvedAt: new Date(),
-        updatedById: approvedById,
       },
     });
 
@@ -314,7 +313,6 @@ export class ChecklistsService {
       where: { id },
       data: {
         status: 'archived',
-        updatedById: archivedById,
       },
     });
 
@@ -415,7 +413,7 @@ export class ChecklistsService {
         where,
         include: {
           template: { select: { code: true, name: true } },
-          completedByUser: { select: { firstName: true, lastName: true } },
+          completedBy: { select: { firstName: true, lastName: true } },
           _count: { select: { items: true } },
         },
         skip: (page - 1) * limit,
@@ -448,11 +446,11 @@ export class ChecklistsService {
         items: {
           include: {
             item: true,
-            answeredByUser: { select: { firstName: true, lastName: true } },
+            answeredBy: { select: { firstName: true, lastName: true } },
           },
           orderBy: { item: { sequenceNumber: 'asc' } },
         },
-        completedByUser: { select: { firstName: true, lastName: true } },
+        completedBy: { select: { firstName: true, lastName: true } },
       },
     });
 
@@ -508,7 +506,7 @@ export class ChecklistsService {
         failedNonCriticalCount: 0,
         gpsLatitude: dto.gpsLatitude,
         gpsLongitude: dto.gpsLongitude,
-        completedBy: startedById,
+        completedById: startedById,
       },
       include: {
         template: {
@@ -603,7 +601,7 @@ export class ChecklistsService {
           attachmentId: answer.attachmentId,
           issueNotes: answer.issueNotes,
           answeredAt: new Date(),
-          answeredBy: answeredById,
+          answeredById: answeredById,
         },
         create: {
           responseId,
@@ -615,7 +613,7 @@ export class ChecklistsService {
           attachmentId: answer.attachmentId,
           issueNotes: answer.issueNotes,
           answeredAt: new Date(),
-          answeredBy: answeredById,
+          answeredById: answeredById,
         },
       });
     }
@@ -680,7 +678,7 @@ export class ChecklistsService {
         status,
         passed,
         completedAt: new Date(),
-        completedBy: completedById,
+        completedById: completedById,
         notes: dto.notes,
         gpsLatitude: dto.gpsLatitude || response.gpsLatitude,
         gpsLongitude: dto.gpsLongitude || response.gpsLongitude,

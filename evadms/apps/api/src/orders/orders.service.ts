@@ -124,7 +124,7 @@ export class OrdersService {
             include: { product: true },
             orderBy: { sortOrder: 'asc' },
           },
-          createdByUser: {
+          createdBy: {
             select: { id: true, firstName: true, lastName: true },
           },
         },
@@ -163,7 +163,7 @@ export class OrdersService {
           include: { product: true },
           orderBy: { sortOrder: 'asc' },
         },
-        routeStops: {
+        routeStop: {
           include: {
             run: {
               include: {
@@ -176,10 +176,10 @@ export class OrdersService {
         podData: {
           include: { photos: true },
         },
-        createdByUser: {
+        createdBy: {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
-        completedByUser: {
+        completedBy: {
           select: { id: true, firstName: true, lastName: true },
         },
       },
@@ -250,14 +250,14 @@ export class OrdersService {
         customerId: dto.customerId,
         siteId: dto.siteId,
         quoteId: dto.quoteId,
-        orderType: dto.orderType,
+        orderType: dto.orderType as any,
         requestedDate: dto.requestedDate ? new Date(dto.requestedDate) : null,
         requestedWindow: dto.requestedWindow,
         subtotal,
         vatAmount,
         deliveryFee,
         total,
-        paymentMethod: dto.paymentMethod || 'cod',
+        paymentMethod: (dto.paymentMethod || 'cod') as any,
         paymentStatus: 'pending',
         status: 'created',
         deliveryInstructions: dto.deliveryInstructions || site.deliveryInstructions,
@@ -330,10 +330,10 @@ export class OrdersService {
       where: { id },
       data: {
         siteId: dto.siteId,
-        orderType: dto.orderType,
+        orderType: dto.orderType as any,
         requestedDate: dto.requestedDate ? new Date(dto.requestedDate) : undefined,
         requestedWindow: dto.requestedWindow,
-        paymentMethod: dto.paymentMethod,
+        paymentMethod: dto.paymentMethod as any,
         deliveryInstructions: dto.deliveryInstructions,
         specialRequirements: dto.specialRequirements,
         notes: dto.notes,
@@ -775,7 +775,7 @@ export class OrdersService {
     const updatedOrder = await this.prisma.order.update({
       where: { id },
       data: {
-        paymentStatus: dto.paymentStatus,
+        paymentStatus: dto.paymentStatus as any,
         updatedById,
       },
     });

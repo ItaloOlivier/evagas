@@ -1227,6 +1227,7 @@ model ChecklistResponseItem {
   item         ChecklistItem     @relation(fields: [itemId], references: [id])
   answeredBy   User              @relation("ItemAnsweredBy", fields: [answeredById], references: [id])
 
+  @@unique([responseId, itemId])
   @@index([responseId])
   @@map("checklist_response_items")
 }

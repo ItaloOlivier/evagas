@@ -134,8 +134,8 @@ export class InventoryService {
         include: {
           order: { select: { orderNumber: true } },
           refillBatch: { select: { batchRef: true } },
-          recordedByUser: { select: { firstName: true, lastName: true } },
-          varianceApprovedByUser: { select: { firstName: true, lastName: true } },
+          recordedBy: { select: { firstName: true, lastName: true } },
+          varianceApprovedBy: { select: { firstName: true, lastName: true } },
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -180,10 +180,10 @@ export class InventoryService {
     const movement = await this.prisma.cylinderMovement.create({
       data: {
         movementRef,
-        cylinderSize: dto.cylinderSize,
-        movementType: dto.movementType,
-        fromStatus: statusMapping.from,
-        toStatus: statusMapping.to,
+        cylinderSize: dto.cylinderSize as any,
+        movementType: dto.movementType as any,
+        fromStatus: statusMapping.from as any,
+        toStatus: statusMapping.to as any,
         quantity: dto.quantity,
         orderId: dto.orderId,
         refillBatchId: dto.refillBatchId,
@@ -191,7 +191,7 @@ export class InventoryService {
         reason: dto.reason,
         notes: dto.notes,
         recordedAt: new Date(),
-        recordedBy: recordedById,
+        recordedById: recordedById,
       },
     });
 
@@ -244,15 +244,15 @@ export class InventoryService {
     const movement = await this.prisma.cylinderMovement.create({
       data: {
         movementRef,
-        cylinderSize: dto.cylinderSize,
-        movementType: 'adjustment',
-        toStatus: dto.status,
+        cylinderSize: dto.cylinderSize as any,
+        movementType: 'adjustment' as any,
+        toStatus: dto.status as any,
         quantity: Math.abs(dto.adjustment),
         reason: dto.reason,
         notes: dto.notes,
         varianceApproved: null, // Needs approval
         recordedAt: new Date(),
-        recordedBy: adjustedById,
+        recordedById: adjustedById,
       },
     });
 
@@ -260,8 +260,8 @@ export class InventoryService {
     await this.prisma.cylinderStockSummary.upsert({
       where: {
         cylinderSize_status: {
-          cylinderSize: dto.cylinderSize,
-          status: dto.status,
+          cylinderSize: dto.cylinderSize as any,
+          status: dto.status as any,
         },
       },
       update: {
@@ -269,8 +269,8 @@ export class InventoryService {
         lastUpdated: new Date(),
       },
       create: {
-        cylinderSize: dto.cylinderSize,
-        status: dto.status,
+        cylinderSize: dto.cylinderSize as any,
+        status: dto.status as any,
         quantity: dto.adjustment > 0 ? dto.adjustment : 0,
         lastUpdated: new Date(),
       },
@@ -313,7 +313,7 @@ export class InventoryService {
       where: { id: movementId },
       data: {
         varianceApproved: true,
-        varianceApprovedBy: approvedById,
+        varianceApprovedById: approvedById,
         varianceApprovedAt: new Date(),
         notes: notes ? `${movement.notes || ''}\nApproval: ${notes}` : movement.notes,
       },
@@ -344,15 +344,15 @@ export class InventoryService {
     if (fromStatus) {
       await this.prisma.cylinderStockSummary.upsert({
         where: {
-          cylinderSize_status: { cylinderSize, status: fromStatus },
+          cylinderSize_status: { cylinderSize: cylinderSize as any, status: fromStatus as any },
         },
         update: {
           quantity: { decrement: quantity },
           lastUpdated: new Date(),
         },
         create: {
-          cylinderSize,
-          status: fromStatus,
+          cylinderSize: cylinderSize as any,
+          status: fromStatus as any,
           quantity: 0,
           lastUpdated: new Date(),
         },
@@ -363,15 +363,15 @@ export class InventoryService {
     if (toStatus && !['scrap', 'transfer_out'].includes(movementType)) {
       await this.prisma.cylinderStockSummary.upsert({
         where: {
-          cylinderSize_status: { cylinderSize, status: toStatus },
+          cylinderSize_status: { cylinderSize: cylinderSize as any, status: toStatus as any },
         },
         update: {
           quantity: { increment: quantity },
           lastUpdated: new Date(),
         },
         create: {
-          cylinderSize,
-          status: toStatus,
+          cylinderSize: cylinderSize as any,
+          status: toStatus as any,
           quantity: quantity,
           lastUpdated: new Date(),
         },
@@ -406,11 +406,11 @@ export class InventoryService {
       this.prisma.cylinderRefillBatch.findMany({
         where,
         include: {
-          createdByUser: { select: { firstName: true, lastName: true } },
-          inspectedByUser: { select: { firstName: true, lastName: true } },
-          filledByUser: { select: { firstName: true, lastName: true } },
-          qcByUser: { select: { firstName: true, lastName: true } },
-          stockedByUser: { select: { firstName: true, lastName: true } },
+          createdBy: { select: { firstName: true, lastName: true } },
+          inspectedBy: { select: { firstName: true, lastName: true } },
+          filledBy: { select: { firstName: true, lastName: true } },
+          qcBy: { select: { firstName: true, lastName: true } },
+          stockedBy: { select: { firstName: true, lastName: true } },
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -434,13 +434,12 @@ export class InventoryService {
     const batch = await this.prisma.cylinderRefillBatch.findUnique({
       where: { id },
       include: {
-        createdByUser: { select: { firstName: true, lastName: true } },
-        inspectedByUser: { select: { firstName: true, lastName: true } },
-        filledByUser: { select: { firstName: true, lastName: true } },
-        qcByUser: { select: { firstName: true, lastName: true } },
-        stockedByUser: { select: { firstName: true, lastName: true } },
-        issueMovement: true,
-        stockMovement: true,
+        createdBy: { select: { firstName: true, lastName: true } },
+        inspectedBy: { select: { firstName: true, lastName: true } },
+        filledBy: { select: { firstName: true, lastName: true } },
+        qcBy: { select: { firstName: true, lastName: true } },
+        stockedBy: { select: { firstName: true, lastName: true } },
+        movements: true,
       },
     });
 
@@ -455,7 +454,7 @@ export class InventoryService {
     // Check if there are enough empty cylinders
     const emptyStock = await this.prisma.cylinderStockSummary.findUnique({
       where: {
-        cylinderSize_status: { cylinderSize: dto.cylinderSize, status: 'empty' },
+        cylinderSize_status: { cylinderSize: dto.cylinderSize as any, status: 'empty' },
       },
     });
 
@@ -486,7 +485,7 @@ export class InventoryService {
     const batch = await this.prisma.cylinderRefillBatch.create({
       data: {
         batchRef,
-        cylinderSize: dto.cylinderSize,
+        cylinderSize: dto.cylinderSize as any,
         quantity: dto.quantity,
         status: 'created',
         passedCount: 0,
@@ -524,8 +523,7 @@ export class InventoryService {
         status: 'inspecting',
         preFillChecklistId: checklistId,
         inspectedAt: new Date(),
-        inspectedBy: inspectedById,
-        updatedById: inspectedById,
+        inspectedById: inspectedById,
       },
     });
 
@@ -574,12 +572,11 @@ export class InventoryService {
     const updatedBatch = await this.prisma.cylinderRefillBatch.update({
       where: { id },
       data: {
-        status: newStatus,
+        status: newStatus as any,
         passedCount: dto.passedCount,
         failedCount: dto.failedCount,
         quantity: dto.passedCount, // Update to passed count
         notes: dto.notes ? `${batch.notes || ''}\nInspection: ${dto.notes}` : batch.notes,
-        updatedById: completedById,
       },
     });
 
@@ -624,8 +621,7 @@ export class InventoryService {
       data: {
         fillStationId,
         fillStartedAt: new Date(),
-        filledBy: filledById,
-        updatedById: filledById,
+        filledById: filledById,
       },
     });
 
@@ -656,7 +652,6 @@ export class InventoryService {
       data: {
         status: 'qc',
         fillCompletedAt: new Date(),
-        updatedById: completedById,
       },
     });
 
@@ -693,14 +688,13 @@ export class InventoryService {
     const updatedBatch = await this.prisma.cylinderRefillBatch.update({
       where: { id },
       data: {
-        status: newStatus,
+        status: newStatus as any,
         qcChecklistId: dto.qcChecklistId,
         qcAt: new Date(),
-        qcBy: qcById,
+        qcById: qcById,
         passedCount: dto.passedCount,
         failedCount: (batch.failedCount || 0) + dto.failedCount,
         quantity: dto.passedCount,
-        updatedById: qcById,
       },
     });
 
@@ -757,9 +751,8 @@ export class InventoryService {
       data: {
         status: 'stocked',
         stockedAt: new Date(),
-        stockedBy: stockedById,
+        stockedById: stockedById,
         stockMovementId: movement.id,
-        updatedById: stockedById,
       },
     });
 
@@ -784,7 +777,7 @@ export class InventoryService {
       include: {
         readings: {
           take: 1,
-          orderBy: { readingAt: 'desc' },
+          orderBy: { readingTime: 'desc' },
         },
       },
       orderBy: { tankCode: 'asc' },
@@ -797,7 +790,7 @@ export class InventoryService {
       include: {
         readings: {
           take: 24,
-          orderBy: { readingAt: 'desc' },
+          orderBy: { readingTime: 'desc' },
         },
         movements: {
           take: 20,
@@ -828,8 +821,8 @@ export class InventoryService {
         name: dto.name,
         capacityLitres: dto.capacityLitres,
         currentLevelLitres: 0,
-        minimumLevelLitres: dto.minimumLevelLitres,
-        maximumLevelLitres: dto.maximumLevelLitres || dto.capacityLitres,
+        minLevelLitres: dto.minimumLevelLitres,
+        reorderLevelLitres: dto.maximumLevelLitres || dto.capacityLitres,
         status: 'active',
       },
     });
@@ -857,7 +850,7 @@ export class InventoryService {
 
     const updatedTank = await this.prisma.tank.update({
       where: { id },
-      data: dto,
+      data: dto as any,
     });
 
     await this.auditService.log({
@@ -886,10 +879,10 @@ export class InventoryService {
         tankId: dto.tankId,
         levelLitres: dto.levelLitres,
         temperatureCelsius: dto.temperatureCelsius,
-        pressureKpa: dto.pressureKpa,
+        readingType: 'spot_check' as any,
+        readingTime: new Date(),
         notes: dto.notes,
-        readingAt: new Date(),
-        recordedBy: recordedById,
+        recordedById: recordedById,
       },
     });
 
@@ -936,13 +929,14 @@ export class InventoryService {
       levelChange = -dto.quantityLitres;
     }
 
-    const newLevel = tank.currentLevelLitres + levelChange;
+    const currentLevel = Number(tank.currentLevelLitres);
+    const newLevel = currentLevel + levelChange;
 
     if (newLevel < 0) {
       throw new BadRequestException('Insufficient tank level for this movement');
     }
 
-    if (newLevel > tank.capacityLitres) {
+    if (newLevel > Number(tank.capacityLitres)) {
       throw new BadRequestException('Movement would exceed tank capacity');
     }
 
@@ -950,16 +944,12 @@ export class InventoryService {
       data: {
         movementRef,
         tankId: dto.tankId,
-        movementType: dto.movementType,
+        movementType: dto.movementType as any,
         quantityLitres: dto.quantityLitres,
-        tankLevelBefore: tank.currentLevelLitres,
-        tankLevelAfter: newLevel,
-        supplierDeliveryRef: dto.supplierDeliveryRef,
-        orderId: dto.orderId,
         reason: dto.reason,
         notes: dto.notes,
         recordedAt: new Date(),
-        recordedBy: recordedById,
+        recordedById: recordedById,
       },
     });
 
@@ -982,7 +972,7 @@ export class InventoryService {
         tank: tank.tankCode,
         movementType: dto.movementType,
         quantity: dto.quantityLitres,
-        levelBefore: tank.currentLevelLitres,
+        levelBefore: currentLevel,
         levelAfter: newLevel,
       },
     });
@@ -1000,13 +990,8 @@ export class InventoryService {
           quantity: { lt: 10 }, // Configurable threshold
         },
       }),
-      // Tanks below minimum
-      this.prisma.tank.findMany({
-        where: {
-          status: 'active',
-          currentLevelLitres: { lt: this.prisma.tank.fields.minimumLevelLitres },
-        },
-      }),
+      // Tanks below minimum - use raw query since field comparison is complex
+      this.prisma.$queryRaw`SELECT * FROM tanks WHERE status = 'active' AND current_level_litres < min_level_litres` as Promise<any[]>,
     ]);
 
     return {
@@ -1016,12 +1001,12 @@ export class InventoryService {
         current: c.quantity,
         threshold: 10,
       })),
-      tanks: tanks.map((t) => ({
+      tanks: tanks.map((t: any) => ({
         type: 'tank',
-        code: t.tankCode,
-        current: t.currentLevelLitres,
-        minimum: t.minimumLevelLitres,
-        capacity: t.capacityLitres,
+        code: t.tank_code,
+        current: t.current_level_litres,
+        minimum: t.min_level_litres,
+        capacity: t.capacity_litres,
       })),
     };
   }
