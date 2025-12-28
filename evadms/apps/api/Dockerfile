@@ -5,11 +5,11 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json package-lock.json* ./
+COPY package.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm ci
+RUN npm install
 
 # Build stage
 FROM base AS builder
@@ -18,6 +18,10 @@ COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
+
+# Build shared packages first
+RUN npm run build --workspace=@evadms/shared
+RUN npm run build --workspace=@evadms/database
 
 # Build the API
 RUN npm run build --workspace=@evadms/api
@@ -36,10 +40,6 @@ COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/packages/database/prisma ./prisma
 
 EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Run migrations and start server
 CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/main.js"]

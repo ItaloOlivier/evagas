@@ -5,10 +5,10 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json package-lock.json* ./
+COPY package.json ./
 COPY apps/mobile/package.json ./apps/mobile/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm ci
+RUN npm install
 
 # Build stage
 FROM base AS builder
