@@ -128,7 +128,7 @@ export class QuotesService {
         createdBy: {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
-        convertedOrder: {
+        order: {
           select: { id: true, orderNumber: true, status: true },
         },
       },
@@ -534,7 +534,7 @@ export class QuotesService {
         createdById: convertedById,
         items: {
           create: quote.items.map((item, index) => ({
-            productId: item.productId,
+            product: { connect: { id: item.productId } },
             quantityOrdered: item.quantity,
             quantityDelivered: 0,
             unitPrice: item.unitPrice,

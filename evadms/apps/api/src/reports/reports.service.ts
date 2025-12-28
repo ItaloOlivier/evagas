@@ -129,7 +129,7 @@ export class ReportsService {
         orderCount: item._count,
         quantitySold: item._sum.quantityDelivered || 0,
         revenue: item._sum.lineTotal || 0,
-      })).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)),
+      })).sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0)),
     };
   }
 

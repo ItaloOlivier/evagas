@@ -124,7 +124,7 @@ export class ProductsService {
         sku: dto.sku,
         name: dto.name,
         description: dto.description,
-        productType: dto.productType,
+        productType: dto.productType as any,
         cylinderSizeKg: dto.cylinderSizeKg,
         unitPrice: dto.unitPrice,
         unitOfMeasure: dto.unitOfMeasure,
@@ -170,7 +170,10 @@ export class ProductsService {
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        productType: dto.productType ? (dto.productType as any) : undefined,
+      },
     });
 
     await this.auditService.log({
@@ -434,7 +437,7 @@ export class ProductsService {
               { validTo: { gte: new Date() } },
             ],
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { validFrom: 'desc' },
         });
 
         if (customerPrice) {

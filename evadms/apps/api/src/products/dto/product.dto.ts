@@ -221,7 +221,7 @@ export class SetCustomerPriceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  validTo?: Date;
 }
 
 export class GetPriceDto {
