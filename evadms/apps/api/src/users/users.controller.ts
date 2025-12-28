@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto, AssignRolesDto } from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto, AssignRolesDto, UserQueryDto } from './dto/user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,21 +27,10 @@ export class UsersController {
   @Get()
   @Roles('admin', 'owner', 'supervisor')
   @ApiOperation({ summary: 'Get all users' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false })
-  @ApiQuery({ name: 'status', required: false })
-  @ApiQuery({ name: 'role', required: false })
-  async findAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-    @Query('role') role?: string,
-  ) {
+  async findAll(@Query() query: UserQueryDto) {
     try {
-      console.log('[UsersController] findAll - params:', { page, limit, search, status, role });
-      const result = await this.usersService.findAll({ page, limit, search, status, role });
+      console.log('[UsersController] findAll - query:', query);
+      const result = await this.usersService.findAll(query);
       console.log('[UsersController] findAll - success, count:', result.data?.length);
       return result;
     } catch (error) {
