@@ -29,13 +29,14 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users' })
   async findAll(@Query() query: UserQueryDto) {
     console.log('[UsersController] findAll - ENTERED');
+    console.log('[UsersController] findAll - query:', JSON.stringify(query));
     try {
-      console.log('[UsersController] findAll - query:', query);
       const result = await this.usersService.findAll(query);
       console.log('[UsersController] findAll - success, count:', result.data?.length);
       return result;
     } catch (error) {
-      console.error('[UsersController] findAll - ERROR:', error);
+      console.error('[UsersController] findAll - ERROR:', error.message);
+      console.error('[UsersController] findAll - STACK:', error.stack);
       throw error;
     }
   }
