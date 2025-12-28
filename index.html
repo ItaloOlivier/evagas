@@ -384,8 +384,12 @@
                     <li role="none"><a href="#services" class="nav-link" role="menuitem" itemprop="url">Services</a></li>
                     <li role="none"><a href="#faq" class="nav-link" role="menuitem" itemprop="url">FAQ</a></li>
                     <li role="none"><a href="#contact" class="nav-link" role="menuitem" itemprop="url">Contact</a></li>
+                    <li role="none" class="mobile-login-item"><button class="btn btn-outline btn-block mobile-login-btn" id="mobileLoginBtn">Log In</button></li>
                 </ul>
-                <a href="#contact" class="btn btn-primary nav-cta">Get a Quote</a>
+                <div class="nav-actions">
+                    <button class="btn btn-outline nav-login" id="loginBtn" aria-label="Log in to your account">Log In</button>
+                    <a href="#contact" class="btn btn-primary nav-cta">Get a Quote</a>
+                </div>
                 <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links">
                     <span></span>
                     <span></span>
@@ -1053,6 +1057,64 @@
             </div>
         </div>
     </footer>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal" aria-hidden="true" role="dialog" aria-labelledby="login-modal-title">
+        <div class="modal">
+            <button class="modal-close" id="closeModal" aria-label="Close login modal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="modal-header">
+                <img src="logo.jpg" alt="EVAGas" class="modal-logo" width="120">
+                <h2 id="login-modal-title" class="modal-title">Welcome Back</h2>
+                <p class="modal-subtitle">Log in to access your EVAGas account</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" name="email" placeholder="your@email.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="login-password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                            <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span class="checkbox-custom"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    Log In
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                </button>
+            </form>
+            <div class="modal-footer">
+                <p>Don't have an account? <a href="#contact" id="signupLink">Contact us</a></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="script.js"></script>

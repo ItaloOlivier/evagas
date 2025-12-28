@@ -263,3 +263,153 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', () => {
     document.body.classList.add('loaded');
 });
+
+// ===== Login Modal =====
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('loginBtn');
+    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeModal = document.getElementById('closeModal');
+    const loginForm = document.getElementById('loginForm');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('login-password');
+    const signupLink = document.getElementById('signupLink');
+
+    // Function to open login modal
+    function openLoginModal() {
+        // Close mobile menu if open
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        if (mobileMenuBtn && navLinks) {
+            mobileMenuBtn.classList.remove('active');
+            navLinks.classList.remove('active');
+        }
+
+        loginModal.classList.add('active');
+        loginModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        // Focus first input
+        setTimeout(() => {
+            document.getElementById('login-email').focus();
+        }, 100);
+    }
+
+    // Open modal from desktop button
+    if (loginBtn && loginModal) {
+        loginBtn.addEventListener('click', openLoginModal);
+    }
+
+    // Open modal from mobile button
+    if (mobileLoginBtn && loginModal) {
+        mobileLoginBtn.addEventListener('click', openLoginModal);
+    }
+
+    // Close modal
+    function closeLoginModal() {
+        if (loginModal) {
+            loginModal.classList.remove('active');
+            loginModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (closeModal) {
+        closeModal.addEventListener('click', closeLoginModal);
+    }
+
+    // Close on overlay click
+    if (loginModal) {
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                closeLoginModal();
+            }
+        });
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && loginModal && loginModal.classList.contains('active')) {
+            closeLoginModal();
+        }
+    });
+
+    // Toggle password visibility
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            // Toggle icons
+            const eyeOpen = togglePassword.querySelector('.eye-open');
+            const eyeClosed = togglePassword.querySelector('.eye-closed');
+            if (eyeOpen && eyeClosed) {
+                if (type === 'password') {
+                    eyeOpen.style.display = 'block';
+                    eyeClosed.style.display = 'none';
+                } else {
+                    eyeOpen.style.display = 'none';
+                    eyeClosed.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Handle login form submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('remember').checked;
+
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                Logging in...
+            `;
+            submitBtn.disabled = true;
+
+            // Simulate login (replace with actual API call to EVADMS)
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // For demo: show success and redirect
+                // In production, this would call the EVADMS API
+                submitBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Success!
+                `;
+                submitBtn.style.background = '#10b981';
+                submitBtn.style.borderColor = '#10b981';
+
+                // Redirect to EVADMS after delay
+                setTimeout(() => {
+                    // Redirect to the appropriate dashboard based on role
+                    // For now, redirect to the web dashboard
+                    window.location.href = 'evadms/apps/web';
+                }, 1000);
+            } catch (error) {
+                // Show error
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                alert('Login failed. Please check your credentials and try again.');
+            }
+        });
+    }
+
+    // Close modal and scroll to contact when clicking signup link
+    if (signupLink) {
+        signupLink.addEventListener('click', (e) => {
+            closeLoginModal();
+        });
+    }
+});
