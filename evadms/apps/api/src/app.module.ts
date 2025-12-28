@@ -34,6 +34,7 @@ import { ReportsModule } from './reports/reports.module';
 
     // Core modules
     PrismaModule,
+    AuditModule, // Must be before modules that depend on AuditService
     HealthModule,
     AuthModule,
     UsersModule,
@@ -49,7 +50,6 @@ import { ReportsModule } from './reports/reports.module';
     PODModule,
 
     // Support modules
-    AuditModule,
     ReportsModule,
   ],
 })

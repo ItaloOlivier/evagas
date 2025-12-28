@@ -257,3 +257,35 @@ if (error) {
 - All API errors are wrapped in `ApiError` class with detailed logging
 - Console groups errors with emoji prefix (🚨) for easy identification
 - ErrorBoundary wraps all page content to catch React errors
+
+## Important Module Dependencies
+
+### AuditModule Must Be Loaded First
+The `AuditModule` is a `@Global()` module that provides `AuditService` to many other modules (Users, Orders, Inventory, etc.). In `app.module.ts`, it **must** be imported before any modules that depend on it. The correct import order is:
+
+```typescript
+// Core modules
+PrismaModule,
+AuditModule, // Must be before modules that depend on AuditService
+HealthModule,
+AuthModule,
+UsersModule,
+// ... other modules
+```
+
+### API Route Mappings (Frontend → Backend)
+The frontend API client (`apps/web/src/lib/api.ts`) maps routes to backend endpoints:
+
+| Frontend Call | Backend Endpoint | Notes |
+|---------------|------------------|-------|
+| `reportsApi.sales(params)` | `/reports/sales/summary` | Uses `fromDate/toDate` params |
+| `reportsApi.delivery(params)` | `/reports/delivery/performance` | Uses `fromDate/toDate` params |
+| `reportsApi.inventory()` | `/reports/inventory/summary` | No params |
+| `reportsApi.customer(params)` | `/reports/customers/top` | Uses `fromDate/toDate` params |
+| `reportsApi.compliance(params)` | `/reports/compliance/checklists` | Uses `fromDate/toDate` params |
+| `scheduleApi.runs.list(params)` | `/schedule/runs` | Supports `page`, `limit` pagination |
+
+**Parameter Mapping:** Frontend uses `startDate/endDate`, backend expects `fromDate/toDate`. The API client handles this conversion.
+
+### Validation Configuration
+The API uses `forbidNonWhitelisted: true` in the ValidationPipe, meaning any query/body parameter not explicitly defined in the DTO will cause a 400 error. Always ensure DTOs include all parameters the frontend sends.
