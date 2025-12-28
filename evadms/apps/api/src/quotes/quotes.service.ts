@@ -539,7 +539,7 @@ export class QuotesService {
             quantityDelivered: 0,
             unitPrice: item.unitPrice,
             lineTotal: item.lineTotal,
-            emptiesExpected: item.product.productType === 'cylinder' ? item.quantity : 0,
+            emptiesExpected: item.product.productType === 'cylinder' ? Number(item.quantity) : 0,
             emptiesCollected: 0,
             sortOrder: index + 1,
           })),
