@@ -28,6 +28,7 @@ export class UsersController {
   @Roles('admin', 'owner', 'supervisor')
   @ApiOperation({ summary: 'Get all users' })
   async findAll(@Query() query: UserQueryDto) {
+    console.log('[UsersController] findAll - ENTERED');
     try {
       console.log('[UsersController] findAll - query:', query);
       const result = await this.usersService.findAll(query);
@@ -43,6 +44,7 @@ export class UsersController {
   @Roles('admin', 'owner')
   @ApiOperation({ summary: 'Get all roles' })
   async getRoles() {
+    console.log('[UsersController] getRoles - ENTERED');
     return this.usersService.getRoles();
   }
 
@@ -50,6 +52,7 @@ export class UsersController {
   @Roles('admin', 'owner', 'supervisor')
   @ApiOperation({ summary: 'Get user by ID' })
   async findById(@Param('id') id: string) {
+    console.log('[UsersController] findById - ENTERED, id:', id);
     return this.usersService.findById(id);
   }
 
