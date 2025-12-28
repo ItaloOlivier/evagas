@@ -43,13 +43,13 @@ const mockRuns = [
   },
 ];
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; textColor: string }> = {
   ready: { label: 'Ready to Start', color: 'bg-blue-500', textColor: 'text-blue-600' },
   in_progress: { label: 'In Progress', color: 'bg-orange-500', textColor: 'text-orange-600' },
   completed: { label: 'Completed', color: 'bg-green-500', textColor: 'text-green-600' },
 };
 
-const stopStatusConfig = {
+const stopStatusConfig: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
   pending: { icon: Clock, color: 'text-gray-400', bg: 'bg-gray-100' },
   current: { icon: MapPin, color: 'text-orange-500', bg: 'bg-orange-100' },
   completed: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-100' },

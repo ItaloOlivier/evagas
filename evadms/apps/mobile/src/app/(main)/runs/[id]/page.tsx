@@ -102,7 +102,7 @@ const mockRun = {
   ],
 };
 
-const stopStatusConfig = {
+const stopStatusConfig: Record<string, { icon: typeof Clock; color: string; bg: string; line: string }> = {
   pending: { icon: Clock, color: 'text-gray-400', bg: 'bg-gray-100', line: 'bg-gray-200' },
   current: { icon: MapPin, color: 'text-orange-500', bg: 'bg-orange-100', line: 'bg-orange-200' },
   completed: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-100', line: 'bg-green-500' },
