@@ -132,10 +132,14 @@ docker-compose up -d
 ```
 
 ### Railway
-The project includes `railway.json` for Railway deployment. Configure the following:
-- PostgreSQL database service
-- API service with Dockerfile
-- Environment variables
+Each app has its own Dockerfile and railway.toml for Railway deployment. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+Quick steps:
+1. Create Railway project with PostgreSQL database
+2. Deploy API service (auto-runs migrations)
+3. Deploy Web dashboard
+4. Deploy Mobile PWA
+5. Update CORS origins and API URLs
 
 ## API Documentation
 
