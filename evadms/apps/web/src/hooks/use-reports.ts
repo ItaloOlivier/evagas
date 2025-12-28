@@ -200,11 +200,18 @@ export function useCustomerReport(params: { startDate: string; endDate: string }
   });
 }
 
-export function useComplianceReport() {
+export function useComplianceReport(params?: { startDate: string; endDate: string }) {
+  // Default to last 30 days if no params provided
+  const defaultParams = {
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+  };
+  const effectiveParams = params || defaultParams;
+
   return useQuery({
-    queryKey: ['reports', 'compliance'],
+    queryKey: ['reports', 'compliance', effectiveParams],
     queryFn: async () => {
-      const { data } = await reportsApi.compliance();
+      const { data } = await reportsApi.compliance(effectiveParams);
       return data as ComplianceReport;
     },
   });

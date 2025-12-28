@@ -286,11 +286,25 @@ export const podApi = {
 };
 
 export const reportsApi = {
-  sales: (params: { startDate: string; endDate: string }) => api.get('/reports/sales', { params }),
-  delivery: (params: { startDate: string; endDate: string }) => api.get('/reports/delivery', { params }),
-  inventory: () => api.get('/reports/inventory'),
-  customer: (params: { startDate: string; endDate: string }) => api.get('/reports/customer', { params }),
-  compliance: () => api.get('/reports/compliance'),
+  sales: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/sales/summary', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  salesByCustomerType: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/sales/by-customer-type', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  salesByProduct: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/sales/by-product', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  delivery: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/delivery/performance', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  deliveryDrivers: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/delivery/drivers', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  inventory: () => api.get('/reports/inventory/summary'),
+  inventoryMovements: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/inventory/movements', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  customer: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/customers/top', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  customerRetention: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/customers/retention', { params: { fromDate: params.startDate, toDate: params.endDate } }),
+  compliance: (params: { startDate: string; endDate: string }) =>
+    api.get('/reports/compliance/checklists', { params: { fromDate: params.startDate, toDate: params.endDate } }),
 };
 
 export const usersApi = {
