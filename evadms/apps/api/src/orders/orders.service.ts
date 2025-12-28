@@ -173,7 +173,7 @@ export class OrdersService {
             },
           },
         },
-        podData: {
+        pod: {
           include: { photos: true },
         },
         createdBy: {

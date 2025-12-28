@@ -88,7 +88,7 @@ export class QuotesService {
             include: { product: true },
             orderBy: { sortOrder: 'asc' },
           },
-          createdByUser: {
+          createdBy: {
             select: { id: true, firstName: true, lastName: true },
           },
         },
@@ -125,7 +125,7 @@ export class QuotesService {
           include: { product: true },
           orderBy: { sortOrder: 'asc' },
         },
-        createdByUser: {
+        createdBy: {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
         convertedOrder: {

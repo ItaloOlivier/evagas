@@ -88,7 +88,7 @@ export class InventoryService {
 
   async getStockBySize(cylinderSize: CylinderSize) {
     return this.prisma.cylinderStockSummary.findMany({
-      where: { cylinderSize },
+      where: { cylinderSize: cylinderSize as any },
       orderBy: { status: 'asc' },
     });
   }
@@ -946,8 +946,7 @@ export class InventoryService {
         tankId: dto.tankId,
         movementType: dto.movementType as any,
         quantityLitres: dto.quantityLitres,
-        reason: dto.reason,
-        notes: dto.notes,
+        notes: dto.reason ? `${dto.reason}${dto.notes ? ' - ' + dto.notes : ''}` : dto.notes,
         recordedAt: new Date(),
         recordedById: recordedById,
       },

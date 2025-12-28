@@ -57,7 +57,7 @@ export class ScheduleService {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id },
       include: {
-        runs: {
+        scheduleRuns: {
           take: 10,
           orderBy: { runDate: 'desc' },
         },
@@ -210,7 +210,7 @@ export class ScheduleService {
           select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
         preferredVehicle: true,
-        runs: {
+        scheduleRuns: {
           take: 10,
           orderBy: { runDate: 'desc' },
           include: { vehicle: true },
@@ -422,7 +422,7 @@ export class ScheduleService {
           },
           orderBy: { sequenceNumber: 'asc' },
         },
-        createdByUser: { select: { firstName: true, lastName: true } },
+        createdBy: { select: { firstName: true, lastName: true } },
       },
     });
 
@@ -547,7 +547,6 @@ export class ScheduleService {
         runType: dto.runType,
         plannedStartTime: dto.plannedStartTime,
         notes: dto.notes,
-        updatedById,
       },
       include: {
         driver: {
@@ -745,7 +744,7 @@ export class ScheduleService {
 
     const updatedRun = await this.prisma.scheduleRun.update({
       where: { id },
-      data: { status: 'ready', updatedById: markedById },
+      data: { status: 'ready' },
     });
 
     await this.auditService.log({
@@ -778,7 +777,6 @@ export class ScheduleService {
       data: {
         status: 'in_progress',
         actualStartTime: new Date(),
-        updatedById: startedById,
       },
     });
 
@@ -824,7 +822,6 @@ export class ScheduleService {
         status: 'completed',
         actualEndTime: new Date(),
         notes: dto.notes ? `${run.notes || ''}\n${dto.notes}` : run.notes,
-        updatedById: completedById,
       },
     });
 
@@ -872,7 +869,6 @@ export class ScheduleService {
       data: {
         status: 'cancelled',
         notes: `${run.notes || ''}\nCancelled: ${reason}`,
-        updatedById: cancelledById,
       },
     });
 

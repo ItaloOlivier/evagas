@@ -83,8 +83,8 @@ export class ProductsService {
         customerPrices: {
           where: {
             OR: [
-              { validUntil: null },
-              { validUntil: { gte: new Date() } },
+              { validTo: null },
+              { validTo: { gte: new Date() } },
             ],
           },
           include: { customer: { select: { id: true, accountNumber: true, companyName: true } } },
@@ -317,16 +317,17 @@ export class ProductsService {
 
     const tierPrice = await this.prisma.tierPrice.upsert({
       where: {
-        productId_pricingTierId: {
+        pricingTierId_productId_minQuantity: {
           productId: dto.productId,
           pricingTierId: dto.pricingTierId,
+          minQuantity: 1,
         },
       },
-      update: { price: dto.price },
+      update: { unitPrice: dto.price },
       create: {
         productId: dto.productId,
         pricingTierId: dto.pricingTierId,
-        price: dto.price,
+        unitPrice: dto.price,
       },
     });
 
@@ -365,20 +366,20 @@ export class ProductsService {
         productId: dto.productId,
         customerId: dto.customerId,
         OR: [
-          { validUntil: null },
-          { validUntil: { gte: new Date() } },
+          { validTo: null },
+          { validTo: { gte: new Date() } },
         ],
       },
-      data: { validUntil: new Date() },
+      data: { validTo: new Date() },
     });
 
     const customerPrice = await this.prisma.customerPrice.create({
       data: {
         productId: dto.productId,
         customerId: dto.customerId,
-        price: dto.price,
+        unitPrice: dto.price,
         validFrom: dto.validFrom || new Date(),
-        validUntil: dto.validUntil,
+        validTo: dto.validTo,
       },
     });
 
@@ -411,7 +412,7 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    let price = product.unitPrice;
+    let price = Number(product.unitPrice);
     let priceSource = 'base';
     let discountPercentage = 0;
 
@@ -429,41 +430,40 @@ export class ProductsService {
             customerId,
             validFrom: { lte: new Date() },
             OR: [
-              { validUntil: null },
-              { validUntil: { gte: new Date() } },
+              { validTo: null },
+              { validTo: { gte: new Date() } },
             ],
           },
           orderBy: { createdAt: 'desc' },
         });
 
         if (customerPrice) {
-          price = customerPrice.price;
+          price = Number(customerPrice.unitPrice);
           priceSource = 'customer';
         } else if (customer.pricingTierId) {
           // Check for tier price
-          const tierPrice = await this.prisma.tierPrice.findUnique({
+          const tierPrice = await this.prisma.tierPrice.findFirst({
             where: {
-              productId_pricingTierId: {
-                productId,
-                pricingTierId: customer.pricingTierId,
-              },
+              productId,
+              pricingTierId: customer.pricingTierId,
             },
+            orderBy: { minQuantity: 'asc' },
           });
 
           if (tierPrice) {
-            price = tierPrice.price;
+            price = Number(tierPrice.unitPrice);
             priceSource = 'tier';
           } else if (customer.pricingTier) {
             // Apply tier discount to base price
-            discountPercentage = customer.pricingTier.discountPercentage;
-            price = product.unitPrice * (1 - discountPercentage / 100);
+            discountPercentage = Number(customer.pricingTier.discountPercentage);
+            price = Number(product.unitPrice) * (1 - discountPercentage / 100);
             priceSource = 'tier_discount';
           }
         }
 
         // Apply customer-specific discount if any
-        if (customer.discountPercentage > 0 && priceSource !== 'customer') {
-          const additionalDiscount = customer.discountPercentage;
+        if (Number(customer.discountPercentage) > 0 && priceSource !== 'customer') {
+          const additionalDiscount = Number(customer.discountPercentage);
           price = price * (1 - additionalDiscount / 100);
           discountPercentage += additionalDiscount;
         }

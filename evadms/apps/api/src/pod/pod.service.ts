@@ -56,7 +56,7 @@ export class PODService {
             },
           },
           photos: true,
-          capturedByUser: { select: { firstName: true, lastName: true } },
+          capturedBy: { select: { firstName: true, lastName: true } },
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -98,7 +98,7 @@ export class PODService {
           },
         },
         photos: true,
-        capturedByUser: { select: { firstName: true, lastName: true, email: true } },
+        capturedBy: { select: { firstName: true, lastName: true, email: true } },
       },
     });
 
@@ -114,7 +114,7 @@ export class PODService {
       where: { orderId },
       include: {
         photos: true,
-        capturedByUser: { select: { firstName: true, lastName: true } },
+        capturedBy: { select: { firstName: true, lastName: true } },
       },
     });
   }
@@ -208,7 +208,7 @@ export class PODService {
         driverNotes: dto.driverNotes,
         deviceId: dto.deviceId,
         appVersion: dto.appVersion,
-        capturedBy: capturedById,
+        capturedById: capturedById,
         photos: dto.photos
           ? {
               create: dto.photos.map((photo, index) => ({
@@ -382,7 +382,7 @@ export class PODService {
         outcomeNotes: dto.reason,
         deviceId: dto.deviceId,
         appVersion: dto.appVersion,
-        capturedBy: capturedById,
+        capturedById: capturedById,
         photos: dto.photos
           ? {
               create: dto.photos.map((photo, index) => ({

@@ -131,7 +131,7 @@ export class UsersService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         phone: dto.phone,
-        status: dto.status || 'active',
+        status: (dto.status || 'active') as any,
         createdById,
       },
       include: {

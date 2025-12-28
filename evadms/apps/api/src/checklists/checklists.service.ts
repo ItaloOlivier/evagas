@@ -739,7 +739,7 @@ export class ChecklistsService {
         status: 'abandoned',
         notes: `Abandoned: ${reason}`,
         completedAt: new Date(),
-        completedBy: abandonedById,
+        completedById: abandonedById,
       },
     });
 

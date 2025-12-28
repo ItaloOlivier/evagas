@@ -88,7 +88,7 @@ export class ReportsService {
     for (const order of orders) {
       const type = (customerTypeMap.get(order.customerId) || 'retail') as string;
       byType[type].count += order._count;
-      byType[type].value += order._sum.total || 0;
+      byType[type].value += Number(order._sum.total) || 0;
     }
 
     return {
@@ -273,7 +273,7 @@ export class ReportsService {
         include: {
           readings: {
             take: 1,
-            orderBy: { readingAt: 'desc' },
+            orderBy: { readingTime: 'desc' },
           },
         },
       }),
@@ -303,7 +303,7 @@ export class ReportsService {
         name: t.name,
         currentLevel: t.currentLevelLitres,
         capacity: t.capacityLitres,
-        percentFull: Math.round((t.currentLevelLitres / t.capacityLitres) * 100),
+        percentFull: Math.round((Number(t.currentLevelLitres) / Number(t.capacityLitres)) * 100),
         lastReading: t.readings[0],
       })),
     };
