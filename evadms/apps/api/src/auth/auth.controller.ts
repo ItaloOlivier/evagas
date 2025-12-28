@@ -11,7 +11,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RefreshTokenDto, LogoutDto } from './dto/auth.dto';
+import { LoginDto, RefreshTokenDto, LogoutDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
@@ -29,14 +29,6 @@ export class AuthController {
     const ipAddress = req.ip || req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'];
     return this.authService.login(dto, ipAddress, userAgent);
-  }
-
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'Registration successful' })
-  @ApiResponse({ status: 400, description: 'Email already registered' })
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
   }
 
   @Post('refresh')
