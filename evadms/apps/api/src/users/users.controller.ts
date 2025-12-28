@@ -39,7 +39,15 @@ export class UsersController {
     @Query('status') status?: string,
     @Query('role') role?: string,
   ) {
-    return this.usersService.findAll({ page, limit, search, status, role });
+    try {
+      console.log('[UsersController] findAll - params:', { page, limit, search, status, role });
+      const result = await this.usersService.findAll({ page, limit, search, status, role });
+      console.log('[UsersController] findAll - success, count:', result.data?.length);
+      return result;
+    } catch (error) {
+      console.error('[UsersController] findAll - ERROR:', error);
+      throw error;
+    }
   }
 
   @Get('roles')
