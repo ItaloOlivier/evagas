@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -23,13 +23,16 @@ export class HealthController {
         database: 'connected',
       };
     } catch (error) {
-      return {
-        status: 'unhealthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        database: 'disconnected',
-        error: error.message,
-      };
+      throw new HttpException(
+        {
+          status: 'unhealthy',
+          timestamp: new Date().toISOString(),
+          uptime: process.uptime(),
+          database: 'disconnected',
+          error: error.message,
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 
