@@ -60,22 +60,24 @@ import {
 
 const roleLabels: Record<string, string> = {
   admin: 'Administrator',
-  depot_manager: 'Depot Manager',
+  owner: 'Owner/Director',
+  compliance: 'Compliance Officer',
+  supervisor: 'Supervisor',
   dispatcher: 'Dispatcher',
+  sales: 'Sales/Admin',
+  operator: 'Depot Operator',
   driver: 'Driver',
-  sales: 'Sales',
-  yard_operator: 'Yard Operator',
-  qc_inspector: 'QC Inspector',
 };
 
 const roleColors: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-800',
-  depot_manager: 'bg-blue-100 text-blue-800',
+  owner: 'bg-blue-100 text-blue-800',
+  compliance: 'bg-teal-100 text-teal-800',
+  supervisor: 'bg-indigo-100 text-indigo-800',
   dispatcher: 'bg-green-100 text-green-800',
-  driver: 'bg-orange-100 text-orange-800',
   sales: 'bg-pink-100 text-pink-800',
-  yard_operator: 'bg-yellow-100 text-yellow-800',
-  qc_inspector: 'bg-cyan-100 text-cyan-800',
+  operator: 'bg-yellow-100 text-yellow-800',
+  driver: 'bg-orange-100 text-orange-800',
 };
 
 export default function UsersPage() {
@@ -249,12 +251,13 @@ export default function UsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="depot_manager">Depot Manager</SelectItem>
+                    <SelectItem value="owner">Owner/Director</SelectItem>
+                    <SelectItem value="compliance">Compliance Officer</SelectItem>
+                    <SelectItem value="supervisor">Supervisor</SelectItem>
                     <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                    <SelectItem value="sales">Sales/Admin</SelectItem>
+                    <SelectItem value="operator">Depot Operator</SelectItem>
                     <SelectItem value="driver">Driver</SelectItem>
-                    <SelectItem value="sales">Sales</SelectItem>
-                    <SelectItem value="yard_operator">Yard Operator</SelectItem>
-                    <SelectItem value="qc_inspector">QC Inspector</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -330,12 +333,13 @@ export default function UsersPage() {
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="admin">Administrator</SelectItem>
-                <SelectItem value="depot_manager">Depot Manager</SelectItem>
+                <SelectItem value="owner">Owner/Director</SelectItem>
+                <SelectItem value="compliance">Compliance Officer</SelectItem>
+                <SelectItem value="supervisor">Supervisor</SelectItem>
                 <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                <SelectItem value="sales">Sales/Admin</SelectItem>
+                <SelectItem value="operator">Depot Operator</SelectItem>
                 <SelectItem value="driver">Driver</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="yard_operator">Yard Operator</SelectItem>
-                <SelectItem value="qc_inspector">QC Inspector</SelectItem>
               </SelectContent>
             </Select>
           </div>

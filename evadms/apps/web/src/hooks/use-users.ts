@@ -5,12 +5,13 @@ import { usersApi } from '@/lib/api';
 
 export type UserRole =
   | 'admin'
-  | 'depot_manager'
+  | 'owner'
+  | 'compliance'
+  | 'supervisor'
   | 'dispatcher'
-  | 'driver'
   | 'sales'
-  | 'yard_operator'
-  | 'qc_inspector';
+  | 'operator'
+  | 'driver';
 
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
@@ -80,12 +81,13 @@ export function useUserStats() {
         roles: new Set(users.map((u) => u.role)).size,
         byRole: {
           admin: users.filter((u) => u.role === 'admin').length,
-          depot_manager: users.filter((u) => u.role === 'depot_manager').length,
+          owner: users.filter((u) => u.role === 'owner').length,
+          compliance: users.filter((u) => u.role === 'compliance').length,
+          supervisor: users.filter((u) => u.role === 'supervisor').length,
           dispatcher: users.filter((u) => u.role === 'dispatcher').length,
-          driver: users.filter((u) => u.role === 'driver').length,
           sales: users.filter((u) => u.role === 'sales').length,
-          yard_operator: users.filter((u) => u.role === 'yard_operator').length,
-          qc_inspector: users.filter((u) => u.role === 'qc_inspector').length,
+          operator: users.filter((u) => u.role === 'operator').length,
+          driver: users.filter((u) => u.role === 'driver').length,
         },
       };
     },
