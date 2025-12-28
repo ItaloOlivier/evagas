@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+buildCommand = "npm run build --workspace=@evadms/web"
 
 [deploy]
 startCommand = "node apps/web/.next/standalone/apps/web/server.js"
