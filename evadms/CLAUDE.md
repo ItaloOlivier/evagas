@@ -192,6 +192,60 @@ When running, Swagger docs are available at:
 | Yard Operator | Inventory, refill batches |
 | QC Inspector | Checklists, refill QC |
 
+## Error Handling System
+
+The web app includes comprehensive error handling:
+
+### API Error Class (`lib/api.ts`)
+```typescript
+ApiError {
+  status: number;      // HTTP status code
+  statusText: string;  // HTTP status text
+  endpoint: string;    // API endpoint that failed
+  method: string;      // HTTP method (GET, POST, etc.)
+  requestData?: any;   // Request payload
+  responseData?: any;  // Error response from server
+  timestamp: string;   // ISO timestamp
+}
+```
+
+### Error Utilities (`lib/error-utils.ts`)
+- `getErrorMessage(error)` - Extract user-friendly error message
+- `formatErrorForDisplay(error)` - Format error with title, message, and details
+- `showErrorToast(error, title?)` - Show error toast notification
+- `isAuthError(error)` - Check if 401/403 error
+- `isServerError(error)` - Check if 5xx error
+- `isValidationError(error)` - Check if 400/422 error
+- `isNetworkError(error)` - Check if network/connection error
+
+### Error Components (`components/`)
+- `ErrorBoundary` - React class component that catches errors in children
+- `PageError` - Full page error display with retry button
+- `CardError` - Section-level error display
+- `ErrorDisplay` - Card-based error with expandable debug info
+- `InlineError` - Form field error messages
+
+### Global Error Handling (`components/providers.tsx`)
+- QueryCache with `onError` handler for query failures
+- MutationCache with `onError` handler for mutation failures
+- Smart retry logic - skips retries for 4xx errors
+- Toast notifications for server errors
+
+### Using Error Handling in Pages
+```typescript
+const { data, isLoading, error, refetch } = useUsers();
+
+if (error) {
+  return (
+    <PageError
+      error={error}
+      title="Failed to load users"
+      onRetry={() => refetch()}
+    />
+  );
+}
+```
+
 ## Notes for Claude
 
 - Backend follows NestJS patterns with modules, services, controllers
@@ -200,3 +254,6 @@ When running, Swagger docs are available at:
 - Checklists can block workflows when critical items fail
 - Audit events include SHA-256 hash chain for tamper detection
 - Mobile PWA is designed for offline-first operation
+- All API errors are wrapped in `ApiError` class with detailed logging
+- Console groups errors with emoji prefix (🚨) for easy identification
+- ErrorBoundary wraps all page content to catch React errors
