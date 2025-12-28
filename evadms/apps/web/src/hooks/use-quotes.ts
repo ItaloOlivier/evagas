@@ -99,7 +99,7 @@ export function useCreateQuote() {
 
   return useMutation({
     mutationFn: async (dto: CreateQuoteDto) => {
-      const { data } = await quotesApi.create(dto);
+      const { data } = await quotesApi.create(dto as unknown as Record<string, unknown>);
       return data as Quote;
     },
     onSuccess: () => {
@@ -113,7 +113,7 @@ export function useUpdateQuote() {
 
   return useMutation({
     mutationFn: async ({ id, ...dto }: UpdateQuoteDto & { id: string }) => {
-      const { data } = await quotesApi.update(id, dto);
+      const { data } = await quotesApi.update(id, dto as unknown as Record<string, unknown>);
       return data as Quote;
     },
     onSuccess: (_, variables) => {

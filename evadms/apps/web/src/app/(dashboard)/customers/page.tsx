@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, MoreHorizontal, Building2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Phone, Mail, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -46,74 +45,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { customersApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-
-// Mock data for demo
-const mockCustomers = [
-  {
-    id: '1',
-    code: 'CUST-001',
-    name: 'ABC Corporation',
-    type: 'commercial',
-    creditLimit: 50000,
-    paymentTerms: 'net_30',
-    phone: '+27 11 123 4567',
-    email: 'orders@abccorp.co.za',
-    sites: 3,
-    activeOrders: 2,
-  },
-  {
-    id: '2',
-    code: 'CUST-002',
-    name: 'XYZ Industries',
-    type: 'industrial',
-    creditLimit: 100000,
-    paymentTerms: 'net_45',
-    phone: '+27 11 234 5678',
-    email: 'procurement@xyz.co.za',
-    sites: 5,
-    activeOrders: 4,
-  },
-  {
-    id: '3',
-    code: 'CUST-003',
-    name: 'Quick Gas Ltd',
-    type: 'reseller',
-    creditLimit: 75000,
-    paymentTerms: 'net_30',
-    phone: '+27 11 345 6789',
-    email: 'supply@quickgas.co.za',
-    sites: 2,
-    activeOrders: 1,
-  },
-  {
-    id: '4',
-    code: 'CUST-004',
-    name: 'Metro Restaurant Group',
-    type: 'commercial',
-    creditLimit: 25000,
-    paymentTerms: 'cod',
-    phone: '+27 11 456 7890',
-    email: 'admin@metrorest.co.za',
-    sites: 8,
-    activeOrders: 3,
-  },
-  {
-    id: '5',
-    code: 'CUST-005',
-    name: 'City Bakery Chain',
-    type: 'commercial',
-    creditLimit: 30000,
-    paymentTerms: 'net_14',
-    phone: '+27 11 567 8901',
-    email: 'orders@citybakery.co.za',
-    sites: 4,
-    activeOrders: 1,
-  },
-];
+import { useToast } from '@/components/ui/use-toast';
+import {
+  useCustomers,
+  useCreateCustomer,
+  useUpdateCustomer,
+  type Customer,
+  type CreateCustomerDto,
+} from '@/hooks/use-customers';
 
 const customerTypeLabels: Record<string, string> = {
+  retail: 'Retail',
+  b2b: 'B2B',
+  wholesale: 'Wholesale',
   residential: 'Residential',
   commercial: 'Commercial',
   industrial: 'Industrial',
@@ -122,20 +67,97 @@ const customerTypeLabels: Record<string, string> = {
 
 const paymentTermsLabels: Record<string, string> = {
   cod: 'COD',
+  net_7: 'Net 7',
   net_14: 'Net 14',
   net_30: 'Net 30',
   net_45: 'Net 45',
+  net_60: 'Net 60',
 };
 
 export default function CustomersPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const filteredCustomers = mockCustomers.filter(
-    (customer) =>
+  // Form state
+  const [customerForm, setCustomerForm] = useState<CreateCustomerDto>({
+    name: '',
+    type: 'retail',
+    email: '',
+    phone: '',
+    creditLimit: 0,
+    paymentTerms: 'cod',
+  });
+
+  // Queries
+  const { data: customersData, isLoading, error } = useCustomers();
+
+  // Mutations
+  const createCustomer = useCreateCustomer();
+  const updateCustomer = useUpdateCustomer();
+
+  const customers = customersData?.data || [];
+
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      customer.accountNumber?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === 'all' || customer.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const handleCreateCustomer = async () => {
+    try {
+      await createCustomer.mutateAsync(customerForm);
+      toast({ title: 'Success', description: 'Customer created successfully' });
+      setIsCreateOpen(false);
+      setCustomerForm({
+        name: '',
+        type: 'retail',
+        email: '',
+        phone: '',
+        creditLimit: 0,
+        paymentTerms: 'cod',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to create customer',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleToggleStatus = async (customer: Customer) => {
+    try {
+      const newStatus = customer.status === 'active' ? 'inactive' : 'active';
+      await updateCustomer.mutateAsync({ id: customer.id, status: newStatus });
+      toast({
+        title: 'Success',
+        description: `Customer ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update customer',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load customers</p>
+          <p className="text-sm text-muted-foreground">
+            {(error as any)?.message || 'Please try again later'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -165,19 +187,28 @@ export default function CustomersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Company Name</Label>
-                  <Input id="name" placeholder="Enter company name" />
+                  <Input
+                    id="name"
+                    placeholder="Enter company name"
+                    value={customerForm.name}
+                    onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Customer Type</Label>
-                  <Select>
+                  <Select
+                    value={customerForm.type}
+                    onValueChange={(value: 'retail' | 'b2b' | 'wholesale') =>
+                      setCustomerForm({ ...customerForm, type: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                      <SelectItem value="reseller">Reseller</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                      <SelectItem value="b2b">B2B</SelectItem>
+                      <SelectItem value="wholesale">Wholesale</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -185,29 +216,55 @@ export default function CustomersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" placeholder="+27 XX XXX XXXX" />
+                  <Input
+                    id="phone"
+                    placeholder="+27 XX XXX XXXX"
+                    value={customerForm.phone}
+                    onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="orders@company.co.za" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="orders@company.co.za"
+                    value={customerForm.email}
+                    onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="creditLimit">Credit Limit (ZAR)</Label>
-                  <Input id="creditLimit" type="number" placeholder="0" />
+                  <Input
+                    id="creditLimit"
+                    type="number"
+                    placeholder="0"
+                    value={customerForm.creditLimit}
+                    onChange={(e) =>
+                      setCustomerForm({ ...customerForm, creditLimit: Number(e.target.value) })
+                    }
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="paymentTerms">Payment Terms</Label>
-                  <Select>
+                  <Select
+                    value={customerForm.paymentTerms}
+                    onValueChange={(value: 'cod' | 'net_7' | 'net_14' | 'net_30' | 'net_45' | 'net_60') =>
+                      setCustomerForm({ ...customerForm, paymentTerms: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select terms" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cod">COD</SelectItem>
+                      <SelectItem value="net_7">Net 7</SelectItem>
                       <SelectItem value="net_14">Net 14</SelectItem>
                       <SelectItem value="net_30">Net 30</SelectItem>
                       <SelectItem value="net_45">Net 45</SelectItem>
+                      <SelectItem value="net_60">Net 60</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -217,10 +274,63 @@ export default function CustomersPage() {
               <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateOpen(false)}>Create Customer</Button>
+              <Button onClick={handleCreateCustomer} disabled={createCustomer.isPending}>
+                {createCustomer.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Customer
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Customers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{customers.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Active
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {customers.filter((c) => c.status === 'active').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Sites
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {customers.reduce((acc, c) => acc + (c.sites?.length || 0), 0)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Credit Limit
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(customers.reduce((acc, c) => acc + (c.creditLimit || 0), 0))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -236,16 +346,15 @@ export default function CustomersPage() {
                 className="pl-10"
               />
             </div>
-            <Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="residential">Residential</SelectItem>
-                <SelectItem value="commercial">Commercial</SelectItem>
-                <SelectItem value="industrial">Industrial</SelectItem>
-                <SelectItem value="reseller">Reseller</SelectItem>
+                <SelectItem value="retail">Retail</SelectItem>
+                <SelectItem value="b2b">B2B</SelectItem>
+                <SelectItem value="wholesale">Wholesale</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -257,92 +366,117 @@ export default function CustomersPage() {
         <CardHeader>
           <CardTitle>All Customers</CardTitle>
           <CardDescription>
-            {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''} found
+            {isLoading
+              ? 'Loading...'
+              : `${filteredCustomers.length} customer${filteredCustomers.length !== 1 ? 's' : ''} found`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Credit Limit</TableHead>
-                <TableHead>Terms</TableHead>
-                <TableHead>Sites</TableHead>
-                <TableHead>Active Orders</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{customer.name}</p>
-                        <p className="text-sm text-muted-foreground">{customer.code}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {customerTypeLabels[customer.type]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-sm">
-                        <Phone className="h-3 w-3" />
-                        {customer.phone}
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {customer.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatCurrency(customer.creditLimit)}</TableCell>
-                  <TableCell>{paymentTermsLabels[customer.paymentTerms]}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      {customer.sites}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {customer.activeOrders > 0 && (
-                      <Badge variant="default">{customer.activeOrders}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Customer</DropdownMenuItem>
-                        <DropdownMenuItem>Manage Sites</DropdownMenuItem>
-                        <DropdownMenuItem>View Orders</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          Deactivate
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Credit Limit</TableHead>
+                  <TableHead>Terms</TableHead>
+                  <TableHead>Sites</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No customers found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{customer.name}</p>
+                            {customer.accountNumber && (
+                              <p className="text-sm text-muted-foreground">{customer.accountNumber}</p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {customerTypeLabels[customer.type] || customer.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {customer.phone && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Phone className="h-3 w-3" />
+                              {customer.phone}
+                            </div>
+                          )}
+                          {customer.email && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              {customer.email}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(customer.creditLimit)}</TableCell>
+                      <TableCell>{paymentTermsLabels[customer.paymentTerms] || customer.paymentTerms}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          {customer.sites?.length || 0}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={customer.status === 'active' ? 'success' : 'secondary'}>
+                          {customer.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem>Edit Customer</DropdownMenuItem>
+                            <DropdownMenuItem>Manage Sites</DropdownMenuItem>
+                            <DropdownMenuItem>View Orders</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className={customer.status === 'active' ? 'text-destructive' : ''}
+                              onClick={() => handleToggleStatus(customer)}
+                            >
+                              {customer.status === 'active' ? 'Deactivate' : 'Activate'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

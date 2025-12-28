@@ -131,7 +131,7 @@ export function useCreateOrder() {
 
   return useMutation({
     mutationFn: async (dto: CreateOrderDto) => {
-      const { data } = await ordersApi.create(dto);
+      const { data } = await ordersApi.create(dto as unknown as Record<string, unknown>);
       return data as Order;
     },
     onSuccess: () => {
@@ -145,7 +145,7 @@ export function useUpdateOrder() {
 
   return useMutation({
     mutationFn: async ({ id, ...dto }: UpdateOrderDto & { id: string }) => {
-      const { data } = await ordersApi.update(id, dto);
+      const { data } = await ordersApi.update(id, dto as unknown as Record<string, unknown>);
       return data as Order;
     },
     onSuccess: (_, variables) => {

@@ -98,7 +98,7 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (dto: CreateUserDto) => {
-      const { data } = await usersApi.create(dto);
+      const { data } = await usersApi.create(dto as unknown as Record<string, unknown>);
       return data as User;
     },
     onSuccess: () => {
@@ -112,7 +112,7 @@ export function useUpdateUser() {
 
   return useMutation({
     mutationFn: async ({ id, ...dto }: UpdateUserDto & { id: string }) => {
-      const { data } = await usersApi.update(id, dto);
+      const { data } = await usersApi.update(id, dto as unknown as Record<string, unknown>);
       return data as User;
     },
     onSuccess: (_, variables) => {

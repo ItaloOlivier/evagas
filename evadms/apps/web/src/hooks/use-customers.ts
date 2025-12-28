@@ -85,7 +85,7 @@ export function useCreateCustomer() {
 
   return useMutation({
     mutationFn: async (dto: CreateCustomerDto) => {
-      const { data } = await customersApi.create(dto);
+      const { data } = await customersApi.create(dto as unknown as Record<string, unknown>);
       return data as Customer;
     },
     onSuccess: () => {
@@ -99,7 +99,7 @@ export function useUpdateCustomer() {
 
   return useMutation({
     mutationFn: async ({ id, ...dto }: UpdateCustomerDto & { id: string }) => {
-      const { data } = await customersApi.update(id, dto);
+      const { data } = await customersApi.update(id, dto as unknown as Record<string, unknown>);
       return data as Customer;
     },
     onSuccess: (_, variables) => {

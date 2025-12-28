@@ -89,7 +89,7 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: async (dto: CreateProductDto) => {
-      const { data } = await productsApi.create(dto);
+      const { data } = await productsApi.create(dto as unknown as Record<string, unknown>);
       return data as Product;
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export function useUpdateProduct() {
 
   return useMutation({
     mutationFn: async ({ id, ...dto }: UpdateProductDto & { id: string }) => {
-      const { data } = await productsApi.update(id, dto);
+      const { data } = await productsApi.update(id, dto as unknown as Record<string, unknown>);
       return data as Product;
     },
     onSuccess: (_, variables) => {

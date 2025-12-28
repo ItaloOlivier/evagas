@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, ClipboardCheck, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Plus, MoreHorizontal, ClipboardCheck, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -30,112 +28,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTime } from '@/lib/utils';
-
-// Mock data
-const mockTemplates = [
-  {
-    id: '1',
-    name: 'Daily Vehicle Inspection',
-    category: 'safety',
-    type: 'vehicle_inspection',
-    status: 'active',
-    version: 3,
-    itemCount: 15,
-    blocksOnFailure: true,
-  },
-  {
-    id: '2',
-    name: 'Pre-Delivery Safety Check',
-    category: 'safety',
-    type: 'pre_delivery',
-    status: 'active',
-    version: 2,
-    itemCount: 8,
-    blocksOnFailure: true,
-  },
-  {
-    id: '3',
-    name: 'Cylinder Inspection',
-    category: 'quality',
-    type: 'cylinder_inspection',
-    status: 'active',
-    version: 1,
-    itemCount: 12,
-    blocksOnFailure: false,
-  },
-  {
-    id: '4',
-    name: 'Monthly Depot Audit',
-    category: 'compliance',
-    type: 'depot_audit',
-    status: 'active',
-    version: 4,
-    itemCount: 25,
-    blocksOnFailure: false,
-  },
-  {
-    id: '5',
-    name: 'Driver Training Checklist',
-    category: 'training',
-    type: 'driver_training',
-    status: 'draft',
-    version: 1,
-    itemCount: 20,
-    blocksOnFailure: false,
-  },
-];
-
-const mockResponses = [
-  {
-    id: '1',
-    template: 'Daily Vehicle Inspection',
-    entity: 'Vehicle: GH 123 GP',
-    respondent: 'John Doe',
-    status: 'completed',
-    passed: true,
-    itemCount: 15,
-    passedCount: 15,
-    failedCount: 0,
-    completedAt: '2024-01-15T08:15:00Z',
-  },
-  {
-    id: '2',
-    template: 'Pre-Delivery Safety Check',
-    entity: 'Order: ORD-2024-0156',
-    respondent: 'Mike Smith',
-    status: 'completed',
-    passed: true,
-    itemCount: 8,
-    passedCount: 8,
-    failedCount: 0,
-    completedAt: '2024-01-15T09:30:00Z',
-  },
-  {
-    id: '3',
-    template: 'Daily Vehicle Inspection',
-    entity: 'Vehicle: GH 456 GP',
-    respondent: 'Peter Jones',
-    status: 'completed',
-    passed: false,
-    itemCount: 15,
-    passedCount: 13,
-    failedCount: 2,
-    completedAt: '2024-01-15T07:45:00Z',
-    blocked: true,
-  },
-  {
-    id: '4',
-    template: 'Cylinder Inspection',
-    entity: 'Batch: RF-2024-045',
-    respondent: 'Admin User',
-    status: 'in_progress',
-    passed: null,
-    itemCount: 12,
-    passedCount: 8,
-    failedCount: 0,
-    startedAt: '2024-01-15T10:00:00Z',
-  },
-];
+import { useToast } from '@/components/ui/use-toast';
+import {
+  useChecklistTemplates,
+  useChecklistResponses,
+  useChecklistStats,
+  useActivateChecklistTemplate,
+  useArchiveChecklistTemplate,
+} from '@/hooks/use-checklists';
 
 const templateStatusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'success' }> = {
   draft: { label: 'Draft', variant: 'secondary' },
@@ -143,7 +43,67 @@ const templateStatusConfig: Record<string, { label: string; variant: 'default' |
   archived: { label: 'Archived', variant: 'default' },
 };
 
+const categoryLabels: Record<string, string> = {
+  safety: 'Safety',
+  quality: 'Quality',
+  compliance: 'Compliance',
+  training: 'Training',
+  operational: 'Operational',
+};
+
 export default function ChecklistsPage() {
+  const { toast } = useToast();
+
+  // Queries
+  const { data: templates, isLoading: templatesLoading, error: templatesError } = useChecklistTemplates();
+  const { data: responsesData, isLoading: responsesLoading } = useChecklistResponses({ limit: 50 });
+  const { data: stats } = useChecklistStats();
+
+  // Mutations
+  const activateTemplate = useActivateChecklistTemplate();
+  const archiveTemplate = useArchiveChecklistTemplate();
+
+  const responses = responsesData?.data || [];
+
+  const handleActivateTemplate = async (templateId: string) => {
+    try {
+      await activateTemplate.mutateAsync(templateId);
+      toast({ title: 'Success', description: 'Template activated' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to activate template',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleArchiveTemplate = async (templateId: string) => {
+    try {
+      await archiveTemplate.mutateAsync(templateId);
+      toast({ title: 'Success', description: 'Template archived' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to archive template',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (templatesError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load checklists</p>
+          <p className="text-sm text-muted-foreground">
+            {(templatesError as any)?.message || 'Please try again later'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -169,9 +129,7 @@ export default function ChecklistsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockTemplates.filter((t) => t.status === 'active').length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.activeTemplates ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -181,9 +139,7 @@ export default function ChecklistsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockResponses.filter((r) => r.status === 'completed').length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.completedToday ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -193,24 +149,20 @@ export default function ChecklistsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockResponses.filter((r) => r.status === 'in_progress').length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.inProgress ?? 0}</div>
           </CardContent>
         </Card>
-        <Card className={mockResponses.some((r) => r.blocked) ? 'border-red-300 bg-red-50' : ''}>
+        <Card className={(stats?.blocked ?? 0) > 0 ? 'border-red-300 bg-red-50' : ''}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              {mockResponses.some((r) => r.blocked) && (
+              {(stats?.blocked ?? 0) > 0 && (
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               )}
               Blocked Items
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockResponses.filter((r) => r.blocked).length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.blocked ?? 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -228,93 +180,116 @@ export default function ChecklistsPage() {
               <CardDescription>Completed and in-progress checklists</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Template</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Respondent</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Result</TableHead>
-                    <TableHead>Completed</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockResponses.map((response) => (
-                    <TableRow key={response.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{response.template}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {response.entity}
-                      </TableCell>
-                      <TableCell>{response.respondent}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-green-500 rounded-full"
-                              style={{
-                                width: `${((response.passedCount + response.failedCount) / response.itemCount) * 100}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {response.passedCount + response.failedCount}/{response.itemCount}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {response.status === 'completed' ? (
-                          response.passed ? (
-                            <div className="flex items-center gap-1 text-green-600">
-                              <CheckCircle className="h-4 w-4" />
-                              <span>Passed</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-red-600">
-                              <XCircle className="h-4 w-4" />
-                              <span>Failed</span>
-                              {response.blocked && (
-                                <Badge variant="destructive" className="ml-1">
-                                  Blocked
-                                </Badge>
-                              )}
-                            </div>
-                          )
-                        ) : (
-                          <Badge variant="secondary">In Progress</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {response.completedAt ? formatDateTime(response.completedAt) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            {response.status === 'in_progress' && (
-                              <DropdownMenuItem>Continue</DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem>Download PDF</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {responsesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Template</TableHead>
+                      <TableHead>Entity</TableHead>
+                      <TableHead>Respondent</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Result</TableHead>
+                      <TableHead>Completed</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {responses.length > 0 ? (
+                      responses.map((response) => {
+                        const totalItems = response.answers?.length || 0;
+                        const passedItems = response.answers?.filter((a) => a.passed === true).length || 0;
+                        const failedItems = response.answers?.filter((a) => a.passed === false).length || 0;
+                        const answeredItems = passedItems + failedItems;
+
+                        return (
+                          <TableRow key={response.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">{response.template?.name || 'Unknown'}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {response.entityType}: {response.entityId}
+                            </TableCell>
+                            <TableCell>
+                              {response.respondent?.firstName} {response.respondent?.lastName}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-green-500 rounded-full"
+                                    style={{
+                                      width: totalItems > 0 ? `${(answeredItems / totalItems) * 100}%` : '0%',
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-sm text-muted-foreground">
+                                  {answeredItems}/{totalItems}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {response.status === 'completed' ? (
+                                response.passed ? (
+                                  <div className="flex items-center gap-1 text-green-600">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>Passed</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1 text-red-600">
+                                    <XCircle className="h-4 w-4" />
+                                    <span>Failed</span>
+                                    {response.blocked && (
+                                      <Badge variant="destructive" className="ml-1">
+                                        Blocked
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )
+                              ) : (
+                                <Badge variant="secondary">In Progress</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {response.completedAt ? formatDateTime(response.completedAt) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem>View Details</DropdownMenuItem>
+                                  {response.status === 'in_progress' && (
+                                    <DropdownMenuItem>Continue</DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem>Download PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          No responses found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -326,75 +301,92 @@ export default function ChecklistsPage() {
               <CardDescription>Configure reusable checklist templates</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Template Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>Blocks</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockTemplates.map((template) => (
-                    <TableRow key={template.id}>
-                      <TableCell className="font-medium">{template.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {template.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{template.itemCount} items</TableCell>
-                      <TableCell>v{template.version}</TableCell>
-                      <TableCell>
-                        {template.blocksOnFailure ? (
-                          <Badge variant="destructive">Yes</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">No</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={templateStatusConfig[template.status]?.variant || 'default'}>
-                          {templateStatusConfig[template.status]?.label || template.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Edit Template</DropdownMenuItem>
-                            <DropdownMenuItem>View Items</DropdownMenuItem>
-                            {template.status === 'draft' && (
-                              <DropdownMenuItem>Activate</DropdownMenuItem>
-                            )}
-                            {template.status === 'active' && (
-                              <DropdownMenuItem>Archive</DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                            {template.status === 'draft' && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
-                                  Delete
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {templatesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Template Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead>Version</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {templates && templates.length > 0 ? (
+                      templates.map((template) => (
+                        <TableRow key={template.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{template.name}</p>
+                              {template.description && (
+                                <p className="text-sm text-muted-foreground">{template.description}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {categoryLabels[template.category] || template.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{template.items?.length || 0} items</TableCell>
+                          <TableCell>v{template.version}</TableCell>
+                          <TableCell>
+                            <Badge variant={templateStatusConfig[template.status]?.variant || 'default'}>
+                              {templateStatusConfig[template.status]?.label || template.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Edit Template</DropdownMenuItem>
+                                <DropdownMenuItem>View Items</DropdownMenuItem>
+                                {template.status === 'draft' && (
+                                  <DropdownMenuItem onClick={() => handleActivateTemplate(template.id)}>
+                                    Activate
+                                  </DropdownMenuItem>
+                                )}
+                                {template.status === 'active' && (
+                                  <DropdownMenuItem onClick={() => handleArchiveTemplate(template.id)}>
+                                    Archive
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                                {template.status === 'draft' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-destructive">
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          No templates found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

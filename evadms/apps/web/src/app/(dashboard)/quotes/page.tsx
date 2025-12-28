@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, FileText, Send, Check, X, ArrowRight } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, FileText, Send, Check, X, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -36,71 +36,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatCurrency, formatDate } from '@/lib/utils';
-
-// Mock data
-const mockQuotes = [
-  {
-    id: 'QUO-2024-0045',
-    customer: 'ABC Corporation',
-    status: 'sent',
-    items: [
-      { product: '9kg LPG', qty: 20, price: 180, total: 3600 },
-      { product: '19kg LPG', qty: 10, price: 380, total: 3800 },
-    ],
-    total: 7400,
-    validUntil: '2024-01-25',
-    createdAt: '2024-01-15T10:30:00Z',
-    sentAt: '2024-01-15T11:00:00Z',
-  },
-  {
-    id: 'QUO-2024-0044',
-    customer: 'XYZ Industries',
-    status: 'accepted',
-    items: [{ product: '48kg LPG', qty: 20, price: 950, total: 19000 }],
-    total: 19000,
-    validUntil: '2024-01-20',
-    createdAt: '2024-01-10T09:15:00Z',
-    sentAt: '2024-01-10T10:00:00Z',
-    acceptedAt: '2024-01-12T14:30:00Z',
-  },
-  {
-    id: 'QUO-2024-0043',
-    customer: 'Quick Gas Ltd',
-    status: 'converted',
-    items: [
-      { product: '9kg LPG', qty: 100, price: 160, total: 16000 },
-      { product: '14kg LPG', qty: 50, price: 250, total: 12500 },
-    ],
-    total: 28500,
-    validUntil: '2024-01-18',
-    createdAt: '2024-01-08T14:00:00Z',
-    sentAt: '2024-01-08T15:00:00Z',
-    acceptedAt: '2024-01-09T09:00:00Z',
-    convertedToOrder: 'ORD-2024-0150',
-  },
-  {
-    id: 'QUO-2024-0042',
-    customer: 'Metro Restaurant',
-    status: 'draft',
-    items: [{ product: '19kg LPG', qty: 8, price: 380, total: 3040 }],
-    total: 3040,
-    validUntil: '2024-01-30',
-    createdAt: '2024-01-15T11:45:00Z',
-    sentAt: null,
-  },
-  {
-    id: 'QUO-2024-0041',
-    customer: 'City Bakery',
-    status: 'rejected',
-    items: [{ product: '14kg LPG', qty: 30, price: 280, total: 8400 }],
-    total: 8400,
-    validUntil: '2024-01-12',
-    createdAt: '2024-01-05T08:30:00Z',
-    sentAt: '2024-01-05T09:00:00Z',
-    rejectedAt: '2024-01-07T10:00:00Z',
-    rejectionReason: 'Found better pricing elsewhere',
-  },
-];
+import { useToast } from '@/components/ui/use-toast';
+import {
+  useQuotes,
+  useQuoteStats,
+  useSendQuote,
+  useAcceptQuote,
+  useRejectQuote,
+  useConvertQuote,
+  type Quote,
+} from '@/hooks/use-quotes';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }> = {
   draft: { label: 'Draft', variant: 'secondary' },
@@ -112,16 +57,94 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 };
 
 export default function QuotesPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const filteredQuotes = mockQuotes.filter((quote) => {
+  // Queries
+  const { data: quotesData, isLoading, error } = useQuotes();
+  const { data: stats } = useQuoteStats();
+
+  // Mutations
+  const sendQuote = useSendQuote();
+  const acceptQuote = useAcceptQuote();
+  const rejectQuote = useRejectQuote();
+  const convertQuote = useConvertQuote();
+
+  const quotes = quotesData?.data || [];
+
+  const filteredQuotes = quotes.filter((quote) => {
     const matchesSearch =
-      quote.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quote.customer.toLowerCase().includes(searchQuery.toLowerCase());
+      quote.quoteNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quote.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || quote.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleSendQuote = async (quote: Quote) => {
+    try {
+      await sendQuote.mutateAsync(quote.id);
+      toast({ title: 'Success', description: 'Quote sent to customer' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to send quote',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAcceptQuote = async (quote: Quote) => {
+    try {
+      await acceptQuote.mutateAsync(quote.id);
+      toast({ title: 'Success', description: 'Quote marked as accepted' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to accept quote',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRejectQuote = async (quote: Quote) => {
+    try {
+      await rejectQuote.mutateAsync({ id: quote.id, reason: 'Rejected by admin' });
+      toast({ title: 'Success', description: 'Quote marked as rejected' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to reject quote',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleConvertQuote = async (quote: Quote) => {
+    try {
+      await convertQuote.mutateAsync(quote.id);
+      toast({ title: 'Success', description: 'Quote converted to order' });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to convert quote',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load quotes</p>
+          <p className="text-sm text-muted-foreground">
+            {(error as any)?.message || 'Please try again later'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -149,7 +172,7 @@ export default function QuotesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockQuotes.filter((q) => q.status === 'draft').length}
+              {stats?.draft ?? quotes.filter((q) => q.status === 'draft').length}
             </div>
           </CardContent>
         </Card>
@@ -161,7 +184,7 @@ export default function QuotesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockQuotes.filter((q) => q.status === 'sent').length}
+              {stats?.sent ?? quotes.filter((q) => q.status === 'sent').length}
             </div>
           </CardContent>
         </Card>
@@ -173,7 +196,7 @@ export default function QuotesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockQuotes.filter((q) => q.status === 'accepted').length}
+              {stats?.accepted ?? quotes.filter((q) => q.status === 'accepted').length}
             </div>
           </CardContent>
         </Card>
@@ -185,7 +208,7 @@ export default function QuotesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockQuotes.filter((q) => q.status === 'converted').length}
+              {stats?.converted ?? quotes.filter((q) => q.status === 'converted').length}
             </div>
           </CardContent>
         </Card>
@@ -226,101 +249,117 @@ export default function QuotesPage() {
         <CardHeader>
           <CardTitle>All Quotes</CardTitle>
           <CardDescription>
-            {filteredQuotes.length} quote{filteredQuotes.length !== 1 ? 's' : ''} found
+            {isLoading
+              ? 'Loading...'
+              : `${filteredQuotes.length} quote${filteredQuotes.length !== 1 ? 's' : ''} found`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Quote ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Valid Until</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredQuotes.map((quote) => (
-                <TableRow key={quote.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{quote.id}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{quote.customer}</TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {quote.items.length} item{quote.items.length !== 1 ? 's' : ''}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(quote.total)}
-                  </TableCell>
-                  <TableCell>{formatDate(quote.validUntil)}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusConfig[quote.status]?.variant || 'default'}>
-                      {statusConfig[quote.status]?.label || quote.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        {quote.status === 'draft' && (
-                          <>
-                            <DropdownMenuItem>Edit Quote</DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Send className="mr-2 h-4 w-4" />
-                              Send to Customer
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {quote.status === 'sent' && (
-                          <>
-                            <DropdownMenuItem>
-                              <Check className="mr-2 h-4 w-4" />
-                              Mark Accepted
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <X className="mr-2 h-4 w-4" />
-                              Mark Rejected
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {quote.status === 'accepted' && (
-                          <DropdownMenuItem>
-                            <ArrowRight className="mr-2 h-4 w-4" />
-                            Convert to Order
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem>Download PDF</DropdownMenuItem>
-                        {quote.status === 'draft' && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              Delete Quote
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Quote ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Valid Until</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredQuotes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No quotes found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredQuotes.map((quote) => (
+                    <TableRow key={quote.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{quote.quoteNumber}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{quote.customer?.name || 'Unknown'}</TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {quote.items?.length || 0} item{(quote.items?.length || 0) !== 1 ? 's' : ''}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(quote.totalAmount)}
+                      </TableCell>
+                      <TableCell>{formatDate(quote.validUntil)}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusConfig[quote.status]?.variant || 'default'}>
+                          {statusConfig[quote.status]?.label || quote.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            {quote.status === 'draft' && (
+                              <>
+                                <DropdownMenuItem>Edit Quote</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendQuote(quote)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Customer
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {quote.status === 'sent' && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleAcceptQuote(quote)}>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Mark Accepted
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleRejectQuote(quote)}>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Mark Rejected
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {quote.status === 'accepted' && (
+                              <DropdownMenuItem onClick={() => handleConvertQuote(quote)}>
+                                <ArrowRight className="mr-2 h-4 w-4" />
+                                Convert to Order
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                            <DropdownMenuItem>Download PDF</DropdownMenuItem>
+                            {quote.status === 'draft' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive">
+                                  Delete Quote
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

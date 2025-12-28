@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, Eye, Truck, Package } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Truck, Package, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -35,78 +35,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate } from '@/lib/utils';
-
-// Mock data
-const mockOrders = [
-  {
-    id: 'ORD-2024-0156',
-    customer: 'ABC Corporation',
-    site: 'Main Office',
-    status: 'dispatched',
-    items: [
-      { product: '9kg LPG', qty: 20 },
-      { product: '19kg LPG', qty: 10 },
-    ],
-    total: 4500,
-    createdAt: '2024-01-15T10:30:00Z',
-    deliveryDate: '2024-01-16',
-    driver: 'John Doe',
-    vehicle: 'GH 123 GP',
-  },
-  {
-    id: 'ORD-2024-0155',
-    customer: 'XYZ Industries',
-    site: 'Warehouse A',
-    status: 'scheduled',
-    items: [{ product: '48kg LPG', qty: 15 }],
-    total: 2800,
-    createdAt: '2024-01-15T09:15:00Z',
-    deliveryDate: '2024-01-16',
-    driver: 'Mike Smith',
-    vehicle: 'GH 456 GP',
-  },
-  {
-    id: 'ORD-2024-0154',
-    customer: 'Quick Gas Ltd',
-    site: 'Distribution Center',
-    status: 'delivered',
-    items: [
-      { product: '9kg LPG', qty: 50 },
-      { product: '14kg LPG', qty: 30 },
-    ],
-    total: 6200,
-    createdAt: '2024-01-14T14:00:00Z',
-    deliveryDate: '2024-01-15',
-    driver: 'Peter Jones',
-    vehicle: 'GH 789 GP',
-  },
-  {
-    id: 'ORD-2024-0153',
-    customer: 'Metro Restaurant',
-    site: 'Downtown Branch',
-    status: 'created',
-    items: [{ product: '19kg LPG', qty: 8 }],
-    total: 1500,
-    createdAt: '2024-01-15T11:45:00Z',
-    deliveryDate: '2024-01-17',
-    driver: null,
-    vehicle: null,
-  },
-  {
-    id: 'ORD-2024-0152',
-    customer: 'City Bakery',
-    site: 'Production Facility',
-    status: 'closed',
-    items: [{ product: '14kg LPG', qty: 25 }],
-    total: 3200,
-    createdAt: '2024-01-13T08:30:00Z',
-    deliveryDate: '2024-01-14',
-    driver: 'John Doe',
-    vehicle: 'GH 123 GP',
-  },
-];
+import { useToast } from '@/components/ui/use-toast';
+import {
+  useOrders,
+  useOrderStats,
+  useTransitionOrder,
+  type Order,
+  type OrderStatus,
+} from '@/hooks/use-orders';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }> = {
   created: { label: 'Created', variant: 'secondary' },
@@ -123,23 +60,60 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   closed: { label: 'Closed', variant: 'success' },
 };
 
+const priorityConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }> = {
+  low: { label: 'Low', variant: 'secondary' },
+  normal: { label: 'Normal', variant: 'default' },
+  high: { label: 'High', variant: 'warning' },
+  urgent: { label: 'Urgent', variant: 'destructive' },
+};
+
 export default function OrdersPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const filteredOrders = mockOrders.filter((order) => {
+  // Queries
+  const { data: ordersData, isLoading, error } = useOrders();
+  const { data: stats } = useOrderStats();
+
+  // Mutations
+  const transitionOrder = useTransitionOrder();
+
+  const orders = ordersData?.data || [];
+
+  const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchQuery.toLowerCase());
+      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const ordersByStatus = {
-    active: mockOrders.filter((o) => ['created', 'scheduled', 'prepared', 'loading', 'dispatched', 'in_transit', 'arrived'].includes(o.status)),
-    delivered: mockOrders.filter((o) => o.status === 'delivered'),
-    closed: mockOrders.filter((o) => ['closed', 'cancelled', 'failed'].includes(o.status)),
+  const handleTransition = async (order: Order, newStatus: OrderStatus) => {
+    try {
+      await transitionOrder.mutateAsync({ id: order.id, status: newStatus });
+      toast({ title: 'Success', description: `Order status updated to ${statusConfig[newStatus]?.label}` });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update order status',
+        variant: 'destructive',
+      });
+    }
   };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load orders</p>
+          <p className="text-sm text-muted-foreground">
+            {(error as any)?.message || 'Please try again later'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -166,7 +140,7 @@ export default function OrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ordersByStatus.active.length}</div>
+            <div className="text-2xl font-bold">{stats?.active ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -176,9 +150,7 @@ export default function OrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockOrders.filter((o) => o.status === 'dispatched').length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.inTransit ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -188,7 +160,7 @@ export default function OrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ordersByStatus.delivered.length}</div>
+            <div className="text-2xl font-bold">{stats?.todayDeliveries ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -198,9 +170,7 @@ export default function OrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {mockOrders.filter((o) => o.status === 'created').length}
-            </div>
+            <div className="text-2xl font-bold">{stats?.pending ?? 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -227,6 +197,7 @@ export default function OrdersPage() {
                 <SelectItem value="created">Created</SelectItem>
                 <SelectItem value="scheduled">Scheduled</SelectItem>
                 <SelectItem value="dispatched">Dispatched</SelectItem>
+                <SelectItem value="in_transit">In Transit</SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
@@ -240,89 +211,144 @@ export default function OrdersPage() {
         <CardHeader>
           <CardTitle>All Orders</CardTitle>
           <CardDescription>
-            {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} found
+            {isLoading
+              ? 'Loading...'
+              : `${filteredOrders.length} order${filteredOrders.length !== 1 ? 's' : ''} found`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer / Site</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Delivery Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Driver / Vehicle</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{order.customer}</p>
-                      <p className="text-sm text-muted-foreground">{order.site}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {order.items.map((i) => `${i.qty}x ${i.product}`).join(', ')}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatCurrency(order.total)}</TableCell>
-                  <TableCell>{formatDate(order.deliveryDate)}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusConfig[order.status]?.variant || 'default'}>
-                      {statusConfig[order.status]?.label || order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {order.driver ? (
-                      <div className="flex items-center gap-1">
-                        <Truck className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm">{order.driver}</p>
-                          <p className="text-xs text-muted-foreground">{order.vehicle}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Not assigned</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Edit Order</DropdownMenuItem>
-                        <DropdownMenuItem>Assign Driver</DropdownMenuItem>
-                        <DropdownMenuItem>Update Status</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          Cancel Order
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer / Site</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Delivery Date</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Driver / Vehicle</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No orders found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{order.customer?.name || 'Unknown'}</p>
+                          <p className="text-sm text-muted-foreground">{order.site?.name || 'N/A'}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
+                      <TableCell>
+                        {order.scheduledDate ? formatDate(order.scheduledDate) : 'Not scheduled'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={priorityConfig[order.priority]?.variant || 'default'}>
+                          {priorityConfig[order.priority]?.label || order.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusConfig[order.status]?.variant || 'default'}>
+                          {statusConfig[order.status]?.label || order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {order.driver ? (
+                          <div className="flex items-center gap-1">
+                            <Truck className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm">{order.driver.firstName} {order.driver.lastName}</p>
+                              {order.vehicle && (
+                                <p className="text-xs text-muted-foreground">{order.vehicle.registrationNumber}</p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Not assigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Edit Order</DropdownMenuItem>
+                            <DropdownMenuItem>Assign Driver</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Update Status</DropdownMenuLabel>
+                            {order.status === 'created' && (
+                              <DropdownMenuItem onClick={() => handleTransition(order, 'scheduled')}>
+                                Mark as Scheduled
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'scheduled' && (
+                              <DropdownMenuItem onClick={() => handleTransition(order, 'dispatched')}>
+                                Mark as Dispatched
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'dispatched' && (
+                              <DropdownMenuItem onClick={() => handleTransition(order, 'in_transit')}>
+                                Mark as In Transit
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'in_transit' && (
+                              <DropdownMenuItem onClick={() => handleTransition(order, 'delivered')}>
+                                Mark as Delivered
+                              </DropdownMenuItem>
+                            )}
+                            {order.status === 'delivered' && (
+                              <DropdownMenuItem onClick={() => handleTransition(order, 'closed')}>
+                                Close Order
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleTransition(order, 'cancelled')}
+                            >
+                              Cancel Order
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Download, Calendar, FileBarChart, TrendingUp, Truck, Package, Users } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Download, Calendar, FileBarChart, TrendingUp, Truck, Package, Users, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,6 +21,12 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  useSalesReport,
+  useDeliveryReport,
+  useInventoryReport,
+} from '@/hooks/use-reports';
 import {
   AreaChart,
   Area,
@@ -36,32 +42,6 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-
-// Mock data for charts
-const salesData = [
-  { month: 'Jan', revenue: 125000, orders: 45 },
-  { month: 'Feb', revenue: 142000, orders: 52 },
-  { month: 'Mar', revenue: 138000, orders: 48 },
-  { month: 'Apr', revenue: 156000, orders: 58 },
-  { month: 'May', revenue: 168000, orders: 62 },
-  { month: 'Jun', revenue: 175000, orders: 65 },
-];
-
-const productMixData = [
-  { name: '9kg', value: 45 },
-  { name: '14kg', value: 25 },
-  { name: '19kg', value: 20 },
-  { name: '48kg', value: 10 },
-];
-
-const deliveryData = [
-  { day: 'Mon', completed: 18, failed: 1 },
-  { day: 'Tue', completed: 22, failed: 0 },
-  { day: 'Wed', completed: 20, failed: 2 },
-  { day: 'Thu', completed: 25, failed: 1 },
-  { day: 'Fri', completed: 28, failed: 0 },
-  { day: 'Sat', completed: 15, failed: 1 },
-];
 
 const COLORS = ['#E63E2D', '#F4776A', '#10b981', '#3b82f6'];
 
@@ -98,8 +78,103 @@ const reportTypes = [
   },
 ];
 
+function getDateRange(range: string): { startDate: string; endDate: string } {
+  const now = new Date();
+  const end = now.toISOString().split('T')[0];
+  let start = new Date();
+
+  switch (range) {
+    case 'last_7_days':
+      start.setDate(start.getDate() - 7);
+      break;
+    case 'last_30_days':
+      start.setDate(start.getDate() - 30);
+      break;
+    case 'last_90_days':
+      start.setDate(start.getDate() - 90);
+      break;
+    case 'this_month':
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'last_month':
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { startDate: start.toISOString().split('T')[0], endDate: lastMonthEnd.toISOString().split('T')[0] };
+    case 'this_year':
+      start = new Date(now.getFullYear(), 0, 1);
+      break;
+    default:
+      start.setDate(start.getDate() - 30);
+  }
+
+  return { startDate: start.toISOString().split('T')[0], endDate: end };
+}
+
 export default function ReportsPage() {
+  const { toast } = useToast();
   const [dateRange, setDateRange] = useState('last_30_days');
+  const [customReportType, setCustomReportType] = useState('sales');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [customFormat, setCustomFormat] = useState('pdf');
+
+  const dateParams = useMemo(() => getDateRange(dateRange), [dateRange]);
+
+  // Queries
+  const { data: salesReport, isLoading: salesLoading } = useSalesReport(dateParams);
+  const { data: deliveryReport, isLoading: deliveryLoading } = useDeliveryReport(dateParams);
+  const { data: inventoryReport, isLoading: inventoryLoading } = useInventoryReport();
+
+  const isLoading = salesLoading || deliveryLoading || inventoryLoading;
+
+  // Format data for charts
+  const salesChartData = salesReport?.dailyRevenue?.slice(-30).map((d) => ({
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    revenue: d.revenue,
+    orders: d.orders,
+  })) || [];
+
+  const productMixData = salesReport?.byProduct?.slice(0, 5).map((p) => ({
+    name: p.productName,
+    value: p.percentage,
+  })) || [];
+
+  const deliveryChartData = deliveryReport?.dailyDeliveries?.slice(-7).map((d) => ({
+    day: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    completed: d.successful,
+    failed: d.failed,
+  })) || [];
+
+  // Stats from reports
+  const totalRevenue = salesReport?.summary?.totalRevenue ?? 0;
+  const totalOrders = salesReport?.summary?.totalOrders ?? 0;
+  const avgOrderValue = salesReport?.summary?.averageOrderValue ?? 0;
+  const revenueChange = salesReport?.summary?.revenueChange ?? 0;
+  const successRate = deliveryReport?.summary?.successRate ?? 0;
+
+  const handleGenerateReport = () => {
+    if (!customStartDate || !customEndDate) {
+      toast({
+        title: 'Error',
+        description: 'Please select both start and end dates',
+        variant: 'destructive',
+      });
+      return;
+    }
+    toast({
+      title: 'Generating Report',
+      description: `Generating ${customReportType} report in ${customFormat.toUpperCase()} format...`,
+    });
+    // TODO: Call API to generate report
+  };
+
+  const handleDownloadReport = (reportId: string, format: string) => {
+    toast({
+      title: 'Downloading Report',
+      description: `Preparing ${reportId} report in ${format.toUpperCase()} format...`,
+    });
+    // TODO: Call API to download report
+  };
 
   return (
     <div className="space-y-6">
@@ -138,10 +213,17 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(904000)}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500">+12%</span> vs previous period
-            </p>
+            <div className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(totalRevenue)}
+            </div>
+            {!isLoading && revenueChange !== 0 && (
+              <p className="text-xs text-muted-foreground">
+                <span className={revenueChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                  {revenueChange >= 0 ? '+' : ''}{revenueChange.toFixed(1)}%
+                </span>{' '}
+                vs previous period
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -151,10 +233,9 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">330</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500">+8%</span> vs previous period
-            </p>
+            <div className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : totalOrders}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -164,10 +245,9 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">96.2%</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500">+1.5%</span> vs previous period
-            </p>
+            <div className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `${successRate.toFixed(1)}%`}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -177,10 +257,9 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(2739)}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500">+3%</span> vs previous period
-            </p>
+            <div className="text-2xl font-bold">
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(avgOrderValue)}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -197,25 +276,35 @@ export default function ReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Revenue Trend</CardTitle>
-                <CardDescription>Monthly revenue over time</CardDescription>
+                <CardDescription>Daily revenue over time</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={salesData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(v) => `R${v / 1000}k`} />
-                      <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                      <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="#E63E2D"
-                        fill="#E63E2D"
-                        fillOpacity={0.3}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {salesLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : salesChartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={salesChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" fontSize={12} />
+                        <YAxis tickFormatter={(v) => `R${v / 1000}k`} fontSize={12} />
+                        <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                        <Area
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#E63E2D"
+                          fill="#E63E2D"
+                          fillOpacity={0.3}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No revenue data available
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -223,30 +312,40 @@ export default function ReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Product Mix</CardTitle>
-                <CardDescription>Sales distribution by cylinder size</CardDescription>
+                <CardDescription>Sales distribution by product</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={productMixData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {productMixData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {salesLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : productMixData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={productMixData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {productMixData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No product data available
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -259,17 +358,27 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={deliveryData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="completed" name="Completed" fill="#10b981" />
-                    <Bar dataKey="failed" name="Failed" fill="#ef4444" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {deliveryLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : deliveryChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={deliveryChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="completed" name="Completed" fill="#10b981" />
+                      <Bar dataKey="failed" name="Failed" fill="#ef4444" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No delivery data available
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -292,11 +401,21 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleDownloadReport(report.id, 'pdf')}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       PDF
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleDownloadReport(report.id, 'xlsx')}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Excel
                     </Button>
@@ -315,7 +434,7 @@ export default function ReportsPage() {
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-2">
                   <Label>Report Type</Label>
-                  <Select>
+                  <Select value={customReportType} onValueChange={setCustomReportType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -329,15 +448,23 @@ export default function ReportsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Start Date</Label>
-                  <Input type="date" />
+                  <Input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>End Date</Label>
-                  <Input type="date" />
+                  <Input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Format</Label>
-                  <Select defaultValue="pdf">
+                  <Select value={customFormat} onValueChange={setCustomFormat}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -350,7 +477,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <div className="mt-4">
-                <Button>
+                <Button onClick={handleGenerateReport}>
                   <Download className="mr-2 h-4 w-4" />
                   Generate Report
                 </Button>
