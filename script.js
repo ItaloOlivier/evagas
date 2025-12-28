@@ -391,11 +391,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.style.background = '#10b981';
                 submitBtn.style.borderColor = '#10b981';
 
-                // Redirect to EVADMS after delay
+                // Close modal after success
                 setTimeout(() => {
-                    // Redirect to the appropriate dashboard based on role
-                    // For now, redirect to the web dashboard
-                    window.location.href = 'evadms/apps/web';
+                    // Close the modal and show a message
+                    // In production, this would redirect to the deployed EVADMS dashboard
+                    closeLoginModal();
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.style.background = '';
+                    submitBtn.style.borderColor = '';
+                    submitBtn.disabled = false;
+                    loginForm.reset();
+
+                    // Show coming soon message (replace with actual redirect when EVADMS is deployed)
+                    alert('Login successful! The EVA DMS dashboard is coming soon.');
                 }, 1000);
             } catch (error) {
                 // Show error
