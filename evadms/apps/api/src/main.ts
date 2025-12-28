@@ -20,7 +20,7 @@ async function bootstrap() {
 
   // Global prefix (exclude health endpoint for Railway healthcheck)
   app.setGlobalPrefix('api/v1', {
-    exclude: ['health', '/'],
+    exclude: ['health', '/', 'debug/users-test'],
   });
 
   // Validation
