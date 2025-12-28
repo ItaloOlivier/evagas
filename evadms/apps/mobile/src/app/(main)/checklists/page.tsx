@@ -38,7 +38,7 @@ const mockChecklists = [
   },
 ];
 
-const statusConfig = {
+const statusConfig: Record<string, { icon: typeof CheckCircle; color: string; bg: string; label: string }> = {
   completed: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-100', label: 'Completed' },
   pending: { icon: Clock, color: 'text-gray-400', bg: 'bg-gray-100', label: 'Pending' },
   failed: { icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-100', label: 'Failed' },
