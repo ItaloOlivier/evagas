@@ -11,14 +11,18 @@ export type StopStatus = 'pending' | 'in_progress' | 'completed' | 'skipped' | '
 export interface Vehicle {
   id: string;
   registrationNumber: string;
-  type: VehicleType;
+  vehicleType: VehicleType;
   make?: string;
   model?: string;
   year?: number;
-  capacity?: number;
+  cylinderCapacityUnits?: number;
+  bulkCapacityLitres?: number;
   status: VehicleStatus;
-  lastServiceDate?: string;
-  nextServiceDate?: string;
+  licenseExpiry?: string;
+  roadworthyExpiry?: string;
+  insuranceExpiry?: string;
+  currentOdometer?: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -229,11 +233,12 @@ export function useCreateVehicle() {
   return useMutation({
     mutationFn: async (dto: {
       registrationNumber: string;
-      type: VehicleType;
+      vehicleType: VehicleType;
       make?: string;
       model?: string;
       year?: number;
-      capacity?: number;
+      cylinderCapacityUnits?: number;
+      bulkCapacityLitres?: number;
     }) => {
       const { data } = await scheduleApi.vehicles.create(dto);
       return data as Vehicle;

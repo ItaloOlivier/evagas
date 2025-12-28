@@ -275,7 +275,7 @@ export default function SchedulePage() {
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4" />
                         {run.vehicle
-                          ? `${vehicleTypeLabels[run.vehicle.type] || run.vehicle.type} (${run.vehicle.registrationNumber})`
+                          ? `${vehicleTypeLabels[run.vehicle.vehicleType] || run.vehicle.vehicleType} (${run.vehicle.registrationNumber})`
                           : 'No vehicle assigned'}
                       </div>
                       <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export default function SchedulePage() {
                       <TableHead>Make / Model</TableHead>
                       <TableHead>Capacity</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Next Service</TableHead>
+                      <TableHead>License Expiry</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -370,21 +370,27 @@ export default function SchedulePage() {
                       vehicles.map((vehicle) => (
                         <TableRow key={vehicle.id}>
                           <TableCell className="font-medium">{vehicle.registrationNumber}</TableCell>
-                          <TableCell>{vehicleTypeLabels[vehicle.type] || vehicle.type}</TableCell>
+                          <TableCell>{vehicleTypeLabels[vehicle.vehicleType] || vehicle.vehicleType}</TableCell>
                           <TableCell>
                             {vehicle.make && vehicle.model
                               ? `${vehicle.make} ${vehicle.model}`
                               : '-'}
                           </TableCell>
-                          <TableCell>{vehicle.capacity ? `${vehicle.capacity}kg` : '-'}</TableCell>
+                          <TableCell>
+                            {vehicle.cylinderCapacityUnits
+                              ? `${vehicle.cylinderCapacityUnits} units`
+                              : vehicle.bulkCapacityLitres
+                                ? `${vehicle.bulkCapacityLitres}L`
+                                : '-'}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={vehicleStatusConfig[vehicle.status]?.variant || 'default'}>
                               {vehicleStatusConfig[vehicle.status]?.label || vehicle.status}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {vehicle.nextServiceDate
-                              ? formatDate(vehicle.nextServiceDate)
+                            {vehicle.licenseExpiry
+                              ? formatDate(vehicle.licenseExpiry)
                               : '-'}
                           </TableCell>
                           <TableCell>
