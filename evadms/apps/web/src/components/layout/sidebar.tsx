@@ -38,9 +38,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout, hasPermission } = useAuthStore();
 
-  const filteredNavigation = navigation.filter(
-    (item) => !item.permission || hasPermission(item.permission)
-  );
+  // Show all navigation items - permission filtering handled by API
+  // Admin users see everything, others will get 403 on restricted pages
+  const filteredNavigation = navigation;
 
   return (
     <div className="flex h-full w-64 flex-col bg-eva-dark text-white">
