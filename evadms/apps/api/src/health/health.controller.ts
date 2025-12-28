@@ -47,43 +47,4 @@ export class HealthController {
     };
   }
 
-  @Get('debug/users-test')
-  @ApiOperation({ summary: 'Debug: Test users query (no auth)' })
-  async debugUsersTest() {
-    try {
-      console.log('[HealthController] debugUsersTest - Starting...');
-
-      const users = await this.prisma.user.findMany({
-        include: {
-          roles: {
-            include: {
-              role: true,
-            },
-          },
-        },
-        take: 5,
-      });
-
-      console.log('[HealthController] debugUsersTest - Found', users.length, 'users');
-
-      return {
-        success: true,
-        count: users.length,
-        users: users.map((u) => ({
-          id: u.id,
-          email: u.email,
-          firstName: u.firstName,
-          status: u.status,
-          roles: u.roles.map((r) => r.role.name),
-        })),
-      };
-    } catch (error) {
-      console.error('[HealthController] debugUsersTest - ERROR:', error);
-      return {
-        success: false,
-        error: error.message,
-        stack: error.stack,
-      };
-    }
-  }
 }
