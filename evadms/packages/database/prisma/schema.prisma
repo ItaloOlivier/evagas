@@ -631,7 +631,7 @@ model VehicleCheck {
   vehicle             Vehicle        @relation(fields: [vehicleId], references: [id])
   driver              Driver         @relation(fields: [driverId], references: [id])
   signedOffBy         User?          @relation("CheckSignedOffBy", fields: [signedOffById], references: [id])
-  driverUser          User           @relation("CheckDriver", fields: [driverId], references: [id])
+  driverUser          User           @relation("CheckDriver", fields: [driverId], references: [id], map: "vehicle_checks_driver_user_fkey")
 
   @@index([vehicleId])
   @@index([checkDate])

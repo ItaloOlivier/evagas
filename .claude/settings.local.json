@@ -11,7 +11,11 @@
       "Bash(Where-Object { $_ -match \"eva|gas|logo\" -or $_ -match \"\\.(png|jpg|jpeg|svg|webp)$\" })",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Update design to match EVAGas brand logo\n\n- Update color scheme with brand colors (red #E63E2D, coral accent #F4776A)\n- Replace logo SVG with triple-flame design matching official logo\n- Add \"EVOLVED ENERGY\" tagline in footer\n- Update typography to bolder, more impactful style (800 weight)\n- Redesign hero flame animation with triple-flame structure\n- Update favicon with flame icon design\n- Improve button styling with uppercase text and red glow\n- Tighter letter-spacing for professional appearance\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Use exact EVAGas logo image instead of SVG recreation\n\n- Add actual logo.jpg from brand assets\n- Replace SVG logo in header with actual logo image\n- Replace SVG logo in footer with actual logo image\n- Update CSS styling for image-based logo\n- Add responsive styling for mobile (40px height)\n- Add white background container for footer logo visibility\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(openssl rand:*)",
+      "Bash(npx prisma validate:*)"
     ]
   }
 }
