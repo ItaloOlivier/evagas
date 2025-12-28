@@ -306,10 +306,13 @@ export class UsersService {
   }
 
   private sanitizeUser(user: any) {
+    if (!user) return null;
     const { passwordHash, ...sanitized } = user;
     return {
       ...sanitized,
       roles: user.roles?.map((r: any) => r.role) || [],
+      // Flatten role name for frontend compatibility
+      role: user.roles?.[0]?.role?.name || 'user',
     };
   }
 }
