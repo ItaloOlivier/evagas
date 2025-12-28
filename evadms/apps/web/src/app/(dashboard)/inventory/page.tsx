@@ -411,9 +411,9 @@ export default function InventoryPage() {
                 <Card key={tank.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      {tank.name}
-                      <Badge variant={tank.currentLevel / tank.capacity < 0.3 ? 'warning' : 'success'}>
-                        {Math.round((tank.currentLevel / tank.capacity) * 100)}% Full
+                      {tank.name || 'Unknown Tank'}
+                      <Badge variant={(tank.currentLevel || 0) / (tank.capacity || 1) < 0.3 ? 'warning' : 'success'}>
+                        {Math.round(((tank.currentLevel || 0) / (tank.capacity || 1)) * 100)}% Full
                       </Badge>
                     </CardTitle>
                     <CardDescription>
@@ -425,13 +425,13 @@ export default function InventoryPage() {
                       <div className="relative h-8 rounded-full bg-gray-200 overflow-hidden">
                         <div
                           className="absolute inset-y-0 left-0 bg-eva-primary rounded-full"
-                          style={{ width: `${(tank.currentLevel / tank.capacity) * 100}%` }}
+                          style={{ width: `${((tank.currentLevel || 0) / (tank.capacity || 1)) * 100}%` }}
                         />
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>{tank.currentLevel.toLocaleString()} {tank.unit}</span>
+                        <span>{(tank.currentLevel ?? 0).toLocaleString()} {tank.unit || 'L'}</span>
                         <span className="text-muted-foreground">
-                          of {tank.capacity.toLocaleString()} {tank.unit} capacity
+                          of {(tank.capacity ?? 0).toLocaleString()} {tank.unit || 'L'} capacity
                         </span>
                       </div>
                       <div className="flex gap-2">
