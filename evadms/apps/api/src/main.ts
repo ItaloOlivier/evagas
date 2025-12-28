@@ -3,9 +3,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Global exception filter for detailed error logging
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Security
   app.use(helmet());
@@ -61,4 +65,4 @@ async function bootstrap() {
 }
 
 bootstrap();
-// Deploy trigger: 1735395300
+// Deploy trigger: 1735399200
