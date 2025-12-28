@@ -62,7 +62,6 @@ async function main() {
 
   // Get all permissions
   const allPermissions = await prisma.permission.findMany();
-  const permissionMap = new Map(allPermissions.map(p => [`${p.resource}:${p.action}`, p.id]));
 
   // Admin gets all permissions
   const adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
