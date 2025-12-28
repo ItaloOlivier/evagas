@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "prisma generate --schema=packages/database/prisma/schema.prisma",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "start": "turbo run start",
@@ -20,6 +21,7 @@
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "prisma": "^5.7.0",
     "turbo": "^2.0.0",
     "typescript": "^5.3.0"
   },
