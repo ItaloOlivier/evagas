@@ -395,7 +395,7 @@ export default function ProductsPage() {
                           <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="capitalize">
-                              {product.type.replace('_', ' ')}
+                              {product.type?.replace('_', ' ') || '-'}
                             </Badge>
                           </TableCell>
                           <TableCell>

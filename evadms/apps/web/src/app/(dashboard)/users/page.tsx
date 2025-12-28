@@ -383,8 +383,8 @@ export default function UsersPage() {
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarFallback className="bg-primary/10 text-primary">
-                              {user.firstName[0]}
-                              {user.lastName[0]}
+                              {user.firstName?.[0] || ''}
+                              {user.lastName?.[0] || ''}
                             </AvatarFallback>
                           </Avatar>
                           <div>

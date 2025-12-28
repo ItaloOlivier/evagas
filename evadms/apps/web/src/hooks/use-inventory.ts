@@ -99,13 +99,31 @@ export interface TankReading {
   createdAt: string;
 }
 
+interface InventoryApiResponse {
+  bySize: Record<string, Record<string, number>>;
+  totals: Record<string, number>;
+}
+
 // Queries
 export function useInventorySummary() {
   return useQuery({
     queryKey: ['inventory', 'summary'],
     queryFn: async () => {
       const { data } = await inventoryApi.summary();
-      return data as StockSummary[];
+      const response = data as InventoryApiResponse;
+
+      if (!response?.bySize) return [];
+
+      // Transform API response to StockSummary format
+      return Object.entries(response.bySize).map(([size, statuses]) => ({
+        size: size as CylinderSize,
+        full: statuses.full || 0,
+        empty: statuses.empty || 0,
+        issued: statuses.issued || 0,
+        atCustomer: statuses.at_customer || 0,
+        damaged: statuses.damaged || 0,
+        total: Object.values(statuses).reduce((sum, val) => sum + (val || 0), 0),
+      })) as StockSummary[];
     },
   });
 }

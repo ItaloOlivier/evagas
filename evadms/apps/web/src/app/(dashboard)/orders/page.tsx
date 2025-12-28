@@ -266,8 +266,8 @@ export default function OrdersPage() {
                         {order.scheduledDate ? formatDate(order.scheduledDate) : 'Not scheduled'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={priorityConfig[order.priority]?.variant || 'default'}>
-                          {priorityConfig[order.priority]?.label || order.priority}
+                        <Badge variant={priorityConfig[order.priority || 'normal']?.variant || 'default'}>
+                          {priorityConfig[order.priority || 'normal']?.label || order.priority || 'Normal'}
                         </Badge>
                       </TableCell>
                       <TableCell>
