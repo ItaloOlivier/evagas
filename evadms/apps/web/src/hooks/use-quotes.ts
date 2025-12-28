@@ -79,7 +79,7 @@ export function useQuoteStats() {
   return useQuery({
     queryKey: ['quotes', 'stats'],
     queryFn: async () => {
-      const { data } = await quotesApi.list({ limit: 1000 });
+      const { data } = await quotesApi.list({ limit: 100 });
       const quotes = (data as { data: Quote[] }).data;
       return {
         draft: quotes.filter((q) => q.status === 'draft').length,

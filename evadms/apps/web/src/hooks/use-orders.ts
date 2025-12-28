@@ -103,7 +103,7 @@ export function useOrderStats() {
   return useQuery({
     queryKey: ['orders', 'stats'],
     queryFn: async () => {
-      const { data } = await ordersApi.list({ limit: 1000 });
+      const { data } = await ordersApi.list({ limit: 100 });
       const orders = (data as { data: Order[] }).data;
       const today = new Date().toDateString();
       const todayOrders = orders.filter(

@@ -146,7 +146,7 @@ export function useScheduleStats() {
     queryKey: ['schedule', 'stats'],
     queryFn: async () => {
       const [runsRes, vehiclesRes, driversRes] = await Promise.all([
-        scheduleApi.runs.list({ limit: 1000 }),
+        scheduleApi.runs.list({ limit: 100 }),
         scheduleApi.vehicles.list(),
         scheduleApi.drivers.list(),
       ]);

@@ -59,7 +59,7 @@ export function useDashboardStats() {
     queryKey: ['dashboard', 'stats'],
     queryFn: async () => {
       const [ordersRes, inventoryRes] = await Promise.all([
-        ordersApi.list({ limit: 1000 }),
+        ordersApi.list({ limit: 100 }),
         inventoryApi.summary(),
       ]);
 
@@ -138,7 +138,7 @@ export function useWeeklyOverview() {
   return useQuery({
     queryKey: ['dashboard', 'weekly'],
     queryFn: async () => {
-      const { data } = await ordersApi.list({ limit: 1000 });
+      const { data } = await ordersApi.list({ limit: 100 });
       const orders = (data as { data: any[] }).data || [];
 
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

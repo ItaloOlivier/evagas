@@ -89,7 +89,7 @@ export function useUserStats() {
   return useQuery({
     queryKey: ['users', 'stats'],
     queryFn: async () => {
-      const { data } = await usersApi.list({ limit: 1000 });
+      const { data } = await usersApi.list({ limit: 100 });
       const response = data as UsersApiResponse;
       const users = response.data || [];
       return {

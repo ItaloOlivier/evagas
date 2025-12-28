@@ -130,7 +130,7 @@ export function useChecklistStats() {
     queryFn: async () => {
       const [templatesRes, responsesRes] = await Promise.all([
         checklistsApi.templates.list(),
-        checklistsApi.responses.list({ limit: 1000 }),
+        checklistsApi.responses.list({ limit: 100 }),
       ]);
 
       const templates = templatesRes.data as ChecklistTemplate[];

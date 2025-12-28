@@ -228,16 +228,16 @@ export const scheduleApi = {
     transition: (id: string, status: string) => api.post(`/schedule/runs/${id}/transition`, { status }),
   },
   vehicles: {
-    list: () => api.get('/schedule/vehicles'),
-    get: (id: string) => api.get(`/schedule/vehicles/${id}`),
-    create: (data: Record<string, unknown>) => api.post('/schedule/vehicles', data),
-    update: (id: string, data: Record<string, unknown>) => api.patch(`/schedule/vehicles/${id}`, data),
+    list: () => api.get('/vehicles'),
+    get: (id: string) => api.get(`/vehicles/${id}`),
+    create: (data: Record<string, unknown>) => api.post('/vehicles', data),
+    update: (id: string, data: Record<string, unknown>) => api.patch(`/vehicles/${id}`, data),
   },
   drivers: {
-    list: () => api.get('/schedule/drivers'),
-    get: (id: string) => api.get(`/schedule/drivers/${id}`),
-    create: (data: Record<string, unknown>) => api.post('/schedule/drivers', data),
-    update: (id: string, data: Record<string, unknown>) => api.patch(`/schedule/drivers/${id}`, data),
+    list: () => api.get('/drivers'),
+    get: (id: string) => api.get(`/drivers/${id}`),
+    create: (data: Record<string, unknown>) => api.post('/drivers', data),
+    update: (id: string, data: Record<string, unknown>) => api.patch(`/drivers/${id}`, data),
   },
 };
 
