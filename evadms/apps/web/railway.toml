@@ -1,8 +1,8 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "apps/web/Dockerfile"
+builder = "nixpacks"
 
 [deploy]
+startCommand = "npm run start --workspace=@evadms/web"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
