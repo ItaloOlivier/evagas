@@ -23,6 +23,17 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+export interface LoginResponse extends AuthTokens {
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    permissions: string[];
+  };
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -33,13 +44,21 @@ export class AuthService {
     private auditService: AuditService,
   ) {}
 
-  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthTokens> {
+  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
       include: {
         roles: {
           include: {
-            role: true,
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -124,7 +143,20 @@ export class AuthService {
       userAgent,
     });
 
-    return tokens;
+    // Get primary role
+    const primaryRole = user.roles[0]?.role.name || 'user';
+
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: primaryRole,
+        permissions: this.extractPermissions(user.roles),
+      },
+    };
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {
