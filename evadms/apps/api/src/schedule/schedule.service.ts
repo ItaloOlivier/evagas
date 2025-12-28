@@ -368,8 +368,10 @@ export class ScheduleService {
     status?: string;
     driverId?: string;
     vehicleId?: string;
+    page?: number;
+    limit?: number;
   }) {
-    const { date, fromDate, toDate, status, driverId, vehicleId } = params;
+    const { date, fromDate, toDate, status, driverId, vehicleId, page = 1, limit = 20 } = params;
 
     const where: any = {};
 
@@ -390,29 +392,44 @@ export class ScheduleService {
     if (driverId) where.driverId = driverId;
     if (vehicleId) where.vehicleId = vehicleId;
 
-    return this.prisma.scheduleRun.findMany({
-      where,
-      include: {
-        driver: {
-          include: {
-            user: { select: { firstName: true, lastName: true, phone: true } },
-          },
-        },
-        vehicle: true,
-        stops: {
-          include: {
-            order: {
-              include: {
-                customer: { select: { accountNumber: true, companyName: true } },
-                site: true,
-              },
+    const [data, total] = await Promise.all([
+      this.prisma.scheduleRun.findMany({
+        where,
+        include: {
+          driver: {
+            include: {
+              user: { select: { firstName: true, lastName: true, phone: true } },
             },
           },
-          orderBy: { sequenceNumber: 'asc' },
+          vehicle: true,
+          stops: {
+            include: {
+              order: {
+                include: {
+                  customer: { select: { accountNumber: true, companyName: true } },
+                  site: true,
+                },
+              },
+            },
+            orderBy: { sequenceNumber: 'asc' },
+          },
         },
+        orderBy: [{ runDate: 'asc' }, { plannedStartTime: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.scheduleRun.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: [{ runDate: 'asc' }, { plannedStartTime: 'asc' }],
-    });
+    };
   }
 
   async findRunById(id: string) {
