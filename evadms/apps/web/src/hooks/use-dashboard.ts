@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ordersApi, inventoryApi, reportsApi } from '@/lib/api';
+import { ordersApi, inventoryApi } from '@/lib/api';
 
 export interface DashboardStats {
   todayOrders: number;
@@ -49,6 +49,11 @@ export interface CylinderInventory {
   atCustomer: number;
 }
 
+interface InventoryResponse {
+  bySize: Record<string, Record<string, number>>;
+  totals: Record<string, number>;
+}
+
 export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', 'stats'],
@@ -58,8 +63,8 @@ export function useDashboardStats() {
         inventoryApi.summary(),
       ]);
 
-      const orders = (ordersRes.data as { data: any[] }).data;
-      const inventory = inventoryRes.data as any[];
+      const orders = (ordersRes.data as { data: any[] }).data || [];
+      const inventory = inventoryRes.data as InventoryResponse;
 
       const today = new Date().toDateString();
       const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -78,17 +83,27 @@ export function useDashboardStats() {
         ['dispatched', 'in_transit', 'arrived'].includes(o.status)
       ).length;
 
-      const fullCylinders = inventory.reduce(
-        (sum, item) => sum + (item.full || 0),
-        0
-      );
+      // Calculate full cylinders from bySize structure
+      let fullCylinders = 0;
+      const cylindersBySize: { size: string; count: number }[] = [];
+
+      if (inventory?.bySize) {
+        for (const [size, statuses] of Object.entries(inventory.bySize)) {
+          const fullCount = statuses.full || 0;
+          fullCylinders += fullCount;
+          cylindersBySize.push({
+            size: size.replace('kg', '') + 'kg',
+            count: fullCount,
+          });
+        }
+      }
 
       const todayRevenue = todayOrders.reduce(
-        (sum, o) => sum + (o.totalAmount || 0),
+        (sum, o) => sum + (Number(o.total) || 0),
         0
       );
       const yesterdayRevenue = yesterdayOrders.reduce(
-        (sum, o) => sum + (o.totalAmount || 0),
+        (sum, o) => sum + (Number(o.total) || 0),
         0
       );
 
@@ -105,10 +120,7 @@ export function useDashboardStats() {
         deliveriesInProgress,
         deliveriesCompleted: todayDeliveries,
         fullCylinders,
-        cylindersBySize: inventory.map((item) => ({
-          size: item.size,
-          count: item.full || 0,
-        })),
+        cylindersBySize,
         todayRevenue,
         revenueChange: yesterdayRevenue
           ? Math.round(
@@ -127,7 +139,7 @@ export function useWeeklyOverview() {
     queryKey: ['dashboard', 'weekly'],
     queryFn: async () => {
       const { data } = await ordersApi.list({ limit: 1000 });
-      const orders = (data as { data: any[] }).data;
+      const orders = (data as { data: any[] }).data || [];
 
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const today = new Date();
@@ -144,8 +156,8 @@ export function useWeeklyOverview() {
         );
         const dayDeliveries = orders.filter(
           (o) =>
-            o.deliveredAt &&
-            new Date(o.deliveredAt).toDateString() === dateStr
+            o.completedAt &&
+            new Date(o.completedAt).toDateString() === dateStr
         );
 
         return {
@@ -163,36 +175,44 @@ export function useAlerts() {
   return useQuery({
     queryKey: ['dashboard', 'alerts'],
     queryFn: async () => {
-      const inventoryRes = await inventoryApi.summary();
-      const inventory = inventoryRes.data as any[];
+      try {
+        const inventoryRes = await inventoryApi.alerts();
+        const alertData = inventoryRes.data as { cylinders: any[]; tanks: any[] };
 
-      const alerts: Alert[] = [];
+        const alerts: Alert[] = [];
 
-      // Low stock alerts
-      const minStock: Record<string, number> = {
-        kg_9: 200,
-        kg_14: 150,
-        kg_19: 100,
-        kg_48: 50,
-      };
-
-      inventory.forEach((item) => {
-        const min = minStock[item.size] || 100;
-        if (item.full < min) {
+        // Low cylinder stock alerts
+        alertData.cylinders?.forEach((item) => {
           alerts.push({
             id: `low-stock-${item.size}`,
             type: 'low_stock',
-            severity: item.full < min / 2 ? 'error' : 'warning',
-            title: 'Low Stock Alert',
-            description: `${item.size.replace('kg_', '')}kg cylinders below minimum (${item.full} remaining)`,
+            severity: item.current < item.threshold / 2 ? 'error' : 'warning',
+            title: 'Low Cylinder Stock',
+            description: `${item.size} cylinders below minimum (${item.current} remaining)`,
             entityType: 'inventory',
             entityId: item.size,
             createdAt: new Date().toISOString(),
           });
-        }
-      });
+        });
 
-      return alerts;
+        // Low tank alerts
+        alertData.tanks?.forEach((item) => {
+          alerts.push({
+            id: `low-tank-${item.code}`,
+            type: 'low_stock',
+            severity: item.current < item.minimum / 2 ? 'error' : 'warning',
+            title: 'Low Tank Level',
+            description: `Tank ${item.code} below minimum level (${item.current}L)`,
+            entityType: 'tank',
+            entityId: item.code,
+            createdAt: new Date().toISOString(),
+          });
+        });
+
+        return alerts;
+      } catch {
+        return [];
+      }
     },
     staleTime: 60000,
   });
@@ -202,15 +222,15 @@ export function useRecentOrders() {
   return useQuery({
     queryKey: ['dashboard', 'recent-orders'],
     queryFn: async () => {
-      const { data } = await ordersApi.list({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' });
-      const orders = (data as { data: any[] }).data;
+      const { data } = await ordersApi.list({ limit: 5 });
+      const orders = (data as { data: any[] }).data || [];
 
       return orders.map((order) => ({
         id: order.id,
         orderNumber: order.orderNumber,
-        customer: order.customer?.name || 'Unknown',
+        customer: order.customer?.companyName || order.customer?.primaryContactName || 'Unknown',
         status: order.status,
-        total: order.totalAmount,
+        total: Number(order.total) || 0,
         createdAt: order.createdAt,
       })) as RecentOrder[];
     },
@@ -223,14 +243,16 @@ export function useCylinderInventory() {
     queryKey: ['dashboard', 'cylinder-inventory'],
     queryFn: async () => {
       const { data } = await inventoryApi.summary();
-      const inventory = data as any[];
+      const inventory = data as InventoryResponse;
 
-      return inventory.map((item) => ({
-        size: item.size.replace('kg_', '') + 'kg',
-        full: item.full || 0,
-        empty: item.empty || 0,
-        issued: item.issued || 0,
-        atCustomer: item.atCustomer || 0,
+      if (!inventory?.bySize) return [];
+
+      return Object.entries(inventory.bySize).map(([size, statuses]) => ({
+        size: size.replace('kg', '') + 'kg',
+        full: statuses.full || 0,
+        empty: statuses.empty || 0,
+        issued: statuses.issued || 0,
+        atCustomer: statuses.at_customer || 0,
       })) as CylinderInventory[];
     },
     staleTime: 60000,

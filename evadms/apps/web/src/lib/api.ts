@@ -126,9 +126,10 @@ export const scheduleApi = {
 };
 
 export const inventoryApi = {
-  summary: () => api.get('/inventory/summary'),
-  movements: (params?: Record<string, unknown>) => api.get('/inventory/movements', { params }),
-  recordMovement: (data: Record<string, unknown>) => api.post('/inventory/movements', data),
+  summary: () => api.get('/inventory/cylinders/stock'),
+  movements: (params?: Record<string, unknown>) => api.get('/inventory/cylinders/movements', { params }),
+  recordMovement: (data: Record<string, unknown>) => api.post('/inventory/cylinders/movements', data),
+  alerts: () => api.get('/inventory/cylinders/alerts'),
   refillBatches: {
     list: (params?: Record<string, unknown>) => api.get('/inventory/refill-batches', { params }),
     get: (id: string) => api.get(`/inventory/refill-batches/${id}`),
