@@ -46,13 +46,30 @@ export interface UpdateUserDto {
   status?: UserStatus;
 }
 
+interface UsersApiResponse {
+  data: User[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 // Queries
 export function useUsers(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: ['users', params],
     queryFn: async () => {
       const { data } = await usersApi.list(params);
-      return data as { data: User[]; total: number; page: number; limit: number };
+      const response = data as UsersApiResponse;
+      // Transform to expected format for compatibility
+      return {
+        data: response.data || [],
+        total: response.meta?.total || 0,
+        page: response.meta?.page || 1,
+        limit: response.meta?.limit || 20,
+      };
     },
   });
 }
@@ -73,7 +90,8 @@ export function useUserStats() {
     queryKey: ['users', 'stats'],
     queryFn: async () => {
       const { data } = await usersApi.list({ limit: 1000 });
-      const users = (data as { data: User[] }).data;
+      const response = data as UsersApiResponse;
+      const users = response.data || [];
       return {
         total: users.length,
         active: users.filter((u) => u.status === 'active').length,

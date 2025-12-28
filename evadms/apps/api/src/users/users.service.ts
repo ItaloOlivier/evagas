@@ -62,7 +62,7 @@ export class UsersService {
     ]);
 
     return {
-      data: users.map(this.sanitizeUser),
+      data: users.map((user) => this.sanitizeUser(user)),
       meta: {
         page,
         limit,
