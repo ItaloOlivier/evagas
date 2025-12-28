@@ -133,18 +133,25 @@ docker-compose up -d
 
 ### Railway (Production)
 
-The API is deployed to Railway at: `https://evagas-production.up.railway.app`
+**Services:**
+- **API**: `https://evagas-production.up.railway.app`
+- **Web Dashboard**: `https://web-production-30c2e.up.railway.app`
 
-**Required Environment Variables:**
+#### API Service Environment Variables:
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string (auto-injected by Railway) |
 | `JWT_SECRET` | Secret key for JWT signing (use `openssl rand -hex 32`) |
 | `JWT_ACCESS_EXPIRY` | Access token expiry (default: `15m`) |
 | `JWT_REFRESH_EXPIRY` | Refresh token expiry (default: `7d`) |
-| `CORS_ORIGINS` | Comma-separated allowed origins |
+| `CORS_ORIGINS` | **Required**: Comma-separated allowed origins (e.g., `https://web-production-30c2e.up.railway.app`) |
 
-**Endpoints:**
+#### Web Service Environment Variables:
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_API_URL` | **Required**: API base URL (e.g., `https://evagas-production.up.railway.app`) |
+
+**API Endpoints:**
 - Health check: `/health`
 - API root: `/`
 - API v1: `/api/v1/*`
@@ -152,9 +159,10 @@ The API is deployed to Railway at: `https://evagas-production.up.railway.app`
 
 **Deployment Steps:**
 1. Create Railway project with PostgreSQL database
-2. Add environment variables (JWT_SECRET is required)
-3. Push to main branch - Railway auto-deploys
-4. Run database seed: `npm run db:seed`
+2. Add API service with environment variables (JWT_SECRET, CORS_ORIGINS required)
+3. Add Web service with environment variables (NEXT_PUBLIC_API_URL required)
+4. Push to main branch - Railway auto-deploys
+5. Run database seed: `npm run db:seed`
 
 **Default Admin Credentials (after seeding):**
 - Email: `admin@evagas.co.za`
