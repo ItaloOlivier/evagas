@@ -44,32 +44,37 @@ export class UsersService {
       };
     }
 
-    const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        include: {
-          roles: {
-            include: {
-              role: true,
+    try {
+      const [users, total] = await Promise.all([
+        this.prisma.user.findMany({
+          where,
+          include: {
+            roles: {
+              include: {
+                role: true,
+              },
             },
           },
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.user.count({ where }),
+      ]);
 
-    return {
-      data: users.map((user) => this.sanitizeUser(user)),
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        data: users.map((user) => this.sanitizeUser(user)),
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error('UsersService.findAll error:', error);
+      throw error;
+    }
   }
 
   async findById(id: string) {
