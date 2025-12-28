@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@evadms/shared'],
-  output: 'standalone',
   async rewrites() {
     return [
       {
