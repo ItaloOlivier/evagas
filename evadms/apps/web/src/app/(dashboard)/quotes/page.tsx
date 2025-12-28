@@ -75,7 +75,7 @@ export default function QuotesPage() {
 
   const filteredQuotes = quotes.filter((quote) => {
     const matchesSearch =
-      quote.quoteNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quote.quoteNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       quote.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || quote.status === statusFilter;
     return matchesSearch && matchesStatus;

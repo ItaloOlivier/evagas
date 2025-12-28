@@ -101,7 +101,7 @@ export default function CustomersPage() {
 
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.accountNumber?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'all' || customer.type === typeFilter;
     return matchesSearch && matchesType;
