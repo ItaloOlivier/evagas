@@ -86,7 +86,7 @@ export class ReportsService {
     };
 
     for (const order of orders) {
-      const type = customerTypeMap.get(order.customerId) || 'retail';
+      const type = (customerTypeMap.get(order.customerId) || 'retail') as string;
       byType[type].count += order._count;
       byType[type].value += order._sum.total || 0;
     }

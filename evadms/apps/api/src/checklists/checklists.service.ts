@@ -556,7 +556,7 @@ export class ChecklistsService {
     let failedNonCriticalCount = 0;
 
     for (const answer of dto.answers) {
-      const item = itemsMap.get(answer.itemId);
+      const item = itemsMap.get(answer.itemId) as any;
       if (!item) continue;
 
       // Determine if answer passed
