@@ -131,15 +131,41 @@ The database uses PostgreSQL with Prisma ORM. Key entities:
 docker-compose up -d
 ```
 
-### Railway
-Each app has its own Dockerfile and railway.toml for Railway deployment. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+### Railway (Production)
 
-Quick steps:
+The API is deployed to Railway at: `https://evagas-production.up.railway.app`
+
+**Required Environment Variables:**
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string (auto-injected by Railway) |
+| `JWT_SECRET` | Secret key for JWT signing (use `openssl rand -hex 32`) |
+| `JWT_ACCESS_EXPIRY` | Access token expiry (default: `15m`) |
+| `JWT_REFRESH_EXPIRY` | Refresh token expiry (default: `7d`) |
+| `CORS_ORIGINS` | Comma-separated allowed origins |
+
+**Endpoints:**
+- Health check: `/health`
+- API root: `/`
+- API v1: `/api/v1/*`
+- Swagger docs: `/api/docs`
+
+**Deployment Steps:**
 1. Create Railway project with PostgreSQL database
-2. Deploy API service (auto-runs migrations)
-3. Deploy Web dashboard
-4. Deploy Mobile PWA
-5. Update CORS origins and API URLs
+2. Add environment variables (JWT_SECRET is required)
+3. Push to main branch - Railway auto-deploys
+4. Run database seed: `npm run db:seed`
+
+**Default Admin Credentials (after seeding):**
+- Email: `admin@evagas.co.za`
+- Password: `admin123!`
+
+## Security
+
+- **No public registration**: Users can only be created by admins via `/api/v1/users`
+- **JWT authentication**: All protected endpoints require Bearer token
+- **Role-based access control**: Admin, Depot Manager, Dispatcher, Driver, Sales, Yard Operator, QC Inspector
+- **Refresh token rotation**: Tokens are rotated on each refresh for security
 
 ## API Documentation
 
