@@ -1,45 +1,56 @@
 # Base stage
 FROM node:20-alpine AS base
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json ./
-COPY apps/mobile/package.json ./apps/mobile/
-COPY packages/shared/package.json ./packages/shared/
+WORKDIR /app
+COPY evadms/package.json ./
+COPY evadms/apps/mobile/package.json ./apps/mobile/
+COPY evadms/packages/shared/package.json ./packages/shared/
+COPY evadms/packages/database/package.json ./packages/database/
+COPY evadms/packages/database/prisma ./packages/database/prisma/
 RUN npm install
 
 # Build stage
 FROM base AS builder
+WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Set environment for build
+COPY evadms/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Build the mobile PWA
+# Build-time argument for API URL (Next.js bakes NEXT_PUBLIC_* at build time)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN npm run build --workspace=@evadms/mobile
 
 # Production stage
-FROM base AS runner
+FROM node:20-alpine AS runner
+WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-USER nextjs
-
-# Copy standalone output
-COPY --from=builder --chown=nextjs:nodejs /app/apps/mobile/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/mobile/.next/static ./apps/mobile/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/mobile/public ./apps/mobile/public
-
-EXPOSE 3002
-
 ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "apps/mobile/server.js"]
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+
+# Copy standalone output
+COPY --from=builder /app/apps/mobile/.next/standalone ./
+
+# Static files must be at .next/static relative to server.js
+COPY --from=builder /app/apps/mobile/.next/static ./.next/static
+
+# Public files must be at public/ relative to server.js
+COPY --from=builder /app/apps/mobile/public ./public
+
+# Copy node_modules from builder
+COPY --from=builder /app/node_modules ./node_modules
+
+RUN chown -R nextjs:nodejs /app
+USER nextjs
+
+EXPOSE 3002
+
+CMD ["node", "server.js"]
