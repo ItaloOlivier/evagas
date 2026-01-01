@@ -9,6 +9,8 @@ COPY evadms/package.json ./
 COPY evadms/apps/web/package.json ./apps/web/
 COPY evadms/packages/shared/package.json ./packages/shared/
 COPY evadms/packages/database/package.json ./packages/database/
+# Copy Prisma schema for postinstall generate
+COPY evadms/packages/database/prisma ./packages/database/prisma/
 RUN npm install
 
 # Build stage
