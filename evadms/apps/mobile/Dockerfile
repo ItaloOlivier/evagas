@@ -36,20 +36,22 @@ ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# Copy standalone output - Next.js preserves monorepo structure
-# The server.js is at apps/mobile/server.js within standalone
-COPY --from=builder /app/apps/mobile/.next/standalone ./
+# Copy the mobile app from standalone output directly to /app
+# This flattens the monorepo structure for simpler deployment
+COPY --from=builder /app/apps/mobile/.next/standalone/apps/mobile ./
+COPY --from=builder /app/apps/mobile/.next/standalone/node_modules ./node_modules
+COPY --from=builder /app/apps/mobile/.next/standalone/package.json ./package.json
 
-# Static files must be at .next/static relative to server.js
-COPY --from=builder /app/apps/mobile/.next/static ./apps/mobile/.next/static
+# Static files at .next/static relative to server.js
+COPY --from=builder /app/apps/mobile/.next/static ./.next/static
 
-# Public files must be at public/ relative to server.js
-COPY --from=builder /app/apps/mobile/public ./apps/mobile/public
+# Public files at public/ relative to server.js
+COPY --from=builder /app/apps/mobile/public ./public
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3002
 
-# Run server.js from the correct path within monorepo structure
-CMD ["node", "apps/mobile/server.js"]
+# server.js is now at the root
+CMD ["node", "server.js"]
