@@ -6,7 +6,7 @@ dockerfilePath = "evadms/apps/mobile/Dockerfile"
 NEXT_PUBLIC_API_URL = "${{ NEXT_PUBLIC_API_URL }}"
 
 [deploy]
-startCommand = "node server.js"
+startCommand = "node apps/mobile/server.js"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
