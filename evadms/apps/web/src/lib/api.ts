@@ -314,3 +314,48 @@ export const usersApi = {
   update: (id: string, data: Record<string, unknown>) => api.patch(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
 };
+
+export const foreignCylindersApi = {
+  // Cylinders
+  list: (params?: Record<string, unknown>) => api.get('/foreign-cylinders', { params }),
+  get: (id: string) => api.get(`/foreign-cylinders/${id}`),
+  pendingIntake: () => api.get('/foreign-cylinders/pending-intake'),
+  collect: (data: Record<string, unknown>) => api.post('/foreign-cylinders/collect', data),
+  completeIntake: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/${id}/intake`, data),
+  quarantine: (id: string, data?: Record<string, unknown>) => api.post(`/foreign-cylinders/${id}/quarantine`, data || {}),
+  reject: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/${id}/reject`, data),
+
+  // Decanting
+  decantBatches: {
+    list: (params?: Record<string, unknown>) => api.get('/foreign-cylinders/decant/batches', { params }),
+    get: (id: string) => api.get(`/foreign-cylinders/decant/batches/${id}`),
+    create: (data: Record<string, unknown>) => api.post('/foreign-cylinders/decant/batches', data),
+    start: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/decant/batches/${id}/start`, data),
+    complete: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/decant/batches/${id}/complete`, data),
+    investigate: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/decant/batches/${id}/investigate`, data),
+    resolve: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/decant/batches/${id}/resolve`, data),
+  },
+
+  // Deposits
+  deposits: {
+    create: (data: Record<string, unknown>) => api.post('/foreign-cylinders/deposits', data),
+    update: (id: string, data: Record<string, unknown>) => api.put(`/foreign-cylinders/deposits/${id}`, data),
+  },
+
+  // Violations
+  violations: {
+    list: (params?: Record<string, unknown>) => api.get('/foreign-cylinders/violations', { params }),
+    acknowledge: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/violations/${id}/acknowledge`, data),
+    escalate: (id: string, data: Record<string, unknown>) => api.post(`/foreign-cylinders/violations/${id}/escalate`, data),
+  },
+
+  // Reports
+  reports: {
+    residualYield: (params?: Record<string, unknown>) => api.get('/foreign-cylinders/reports/residual-yield', { params }),
+    varianceTrends: (params?: Record<string, unknown>) => api.get('/foreign-cylinders/reports/variance-trends', { params }),
+  },
+
+  // Utilities
+  depositValues: () => api.get('/foreign-cylinders/deposit-values'),
+  tareWeights: () => api.get('/foreign-cylinders/tare-weights'),
+};
