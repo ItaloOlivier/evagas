@@ -36,13 +36,16 @@ ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# Copy the entire standalone output first
+# Copy the entire standalone output
 COPY --from=builder /app/apps/mobile/.next/standalone ./
 
-# Static files at the correct location relative to server.js location
+# Debug: show what we have
+RUN echo "=== Standalone contents ===" && ls -la . && echo "=== Looking for server.js ===" && find . -name "server.js" -type f 2>/dev/null | head -5
+
+# Static files - copy to where Next.js expects them relative to server.js
 COPY --from=builder /app/apps/mobile/.next/static ./apps/mobile/.next/static
 
-# Public files at the correct location relative to server.js
+# Public files
 COPY --from=builder /app/apps/mobile/public ./apps/mobile/public
 
 RUN chown -R nextjs:nodejs /app
@@ -50,5 +53,5 @@ USER nextjs
 
 EXPOSE 3002
 
-# server.js is at apps/mobile/server.js within the standalone output
+# server.js location in standalone output
 CMD ["node", "apps/mobile/server.js"]
