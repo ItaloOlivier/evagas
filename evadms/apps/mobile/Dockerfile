@@ -39,6 +39,9 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # Copy the entire standalone output
 COPY --from=builder /app/apps/mobile/.next/standalone ./
 
+# Debug: Check what we have after copy
+RUN echo "=== Full structure ===" && find . -type f -name "*.js" | grep -E "(server|next)" | head -10 && echo "=== node_modules check ===" && ls -la node_modules 2>/dev/null | head -5 || echo "No node_modules at root"
+
 # Static files at .next/static relative to server.js (which is at root)
 COPY --from=builder /app/apps/mobile/.next/static ./.next/static
 
