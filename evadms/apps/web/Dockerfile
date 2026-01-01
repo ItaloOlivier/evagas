@@ -31,13 +31,16 @@ ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# Copy standalone output
+# Copy standalone output (includes node_modules with required deps)
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Verify files exist (server.js is at root in standalone output)
-RUN ls -la /app/ && ls -la /app/apps/web/ && test -f /app/server.js
+# Debug: Show standalone structure
+RUN echo "=== /app contents ===" && ls -la /app/ && \
+    echo "=== /app/node_modules exists? ===" && ls -la /app/node_modules 2>/dev/null | head -20 || echo "No node_modules at root" && \
+    echo "=== /app/apps/web contents ===" && ls -la /app/apps/web/ && \
+    test -f /app/server.js
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
