@@ -40,7 +40,6 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # This flattens the monorepo structure for simpler deployment
 COPY --from=builder /app/apps/mobile/.next/standalone/apps/mobile ./
 COPY --from=builder /app/apps/mobile/.next/standalone/node_modules ./node_modules
-COPY --from=builder /app/apps/mobile/.next/standalone/package.json ./package.json
 
 # Static files at .next/static relative to server.js
 COPY --from=builder /app/apps/mobile/.next/static ./.next/static
