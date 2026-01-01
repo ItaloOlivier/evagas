@@ -41,7 +41,7 @@ export default function LoginPage() {
       const response = await authApi.login(data.email, data.password);
       const { user, accessToken, refreshToken } = response.data;
       login(user, accessToken, refreshToken);
-      router.push('/dashboard');
+      router.push('/app/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || 'Invalid credentials');

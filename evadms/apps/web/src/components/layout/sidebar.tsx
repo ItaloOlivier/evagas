@@ -17,21 +17,23 @@ import {
   Settings,
   LogOut,
   Cylinder,
+  PackageX,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Customers', href: '/customers', icon: Users, permission: 'customers:read' },
-  { name: 'Products', href: '/products', icon: Package, permission: 'products:read' },
-  { name: 'Quotes', href: '/quotes', icon: FileText, permission: 'quotes:read' },
-  { name: 'Orders', href: '/orders', icon: ShoppingCart, permission: 'orders:read' },
-  { name: 'Schedule', href: '/schedule', icon: Truck, permission: 'schedule:read' },
-  { name: 'Inventory', href: '/inventory', icon: Cylinder, permission: 'inventory:read' },
-  { name: 'Checklists', href: '/checklists', icon: ClipboardCheck, permission: 'checklists:read' },
-  { name: 'Reports', href: '/reports', icon: BarChart3, permission: 'reports:read' },
-  { name: 'Users', href: '/users', icon: Users, permission: 'users:read' },
-  { name: 'Settings', href: '/settings', icon: Settings, permission: 'settings:read' },
+  { name: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
+  { name: 'Customers', href: '/app/customers', icon: Users, permission: 'customers:read' },
+  { name: 'Products', href: '/app/products', icon: Package, permission: 'products:read' },
+  { name: 'Quotes', href: '/app/quotes', icon: FileText, permission: 'quotes:read' },
+  { name: 'Orders', href: '/app/orders', icon: ShoppingCart, permission: 'orders:read' },
+  { name: 'Schedule', href: '/app/schedule', icon: Truck, permission: 'schedule:read' },
+  { name: 'Inventory', href: '/app/inventory', icon: Cylinder, permission: 'inventory:read' },
+  { name: 'Foreign Cylinders', href: '/app/foreign-cylinders', icon: PackageX, permission: 'foreign_cylinders:read' },
+  { name: 'Checklists', href: '/app/checklists', icon: ClipboardCheck, permission: 'checklists:read' },
+  { name: 'Reports', href: '/app/reports', icon: BarChart3, permission: 'reports:read' },
+  { name: 'Users', href: '/app/users', icon: Users, permission: 'users:read' },
+  { name: 'Settings', href: '/app/settings', icon: Settings, permission: 'settings:read' },
 ];
 
 export function Sidebar() {
