@@ -25,9 +25,6 @@ ENV NODE_ENV=production
 # Build the web app
 RUN npm run build --workspace=@evadms/web
 
-# Debug: List standalone contents
-RUN ls -la apps/web/.next/standalone/ && ls -la apps/web/.next/standalone/apps/web/
-
 # Production stage
 FROM base AS runner
 ENV NODE_ENV=production
@@ -36,12 +33,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-USER nextjs
 
-# Copy standalone output
+WORKDIR /app
+
+# Copy standalone output - preserves full directory structure
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
+# Debug: List contents
+RUN ls -la && ls -la apps/ && ls -la apps/web/
+
+USER nextjs
 
 EXPOSE 3001
 
