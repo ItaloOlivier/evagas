@@ -38,13 +38,13 @@ COPY --from=builder /app/apps/web/public ./apps/web/public
 
 # Debug: Show standalone structure
 RUN echo "=== /app contents ===" && ls -la /app/ && \
-    echo "=== /app/node_modules exists? ===" && ls -la /app/node_modules 2>/dev/null | head -20 || echo "No node_modules at root" && \
-    echo "=== /app/apps/web contents ===" && ls -la /app/apps/web/ && \
-    test -f /app/server.js
+    echo "=== /app/node_modules ===" && ls /app/node_modules 2>/dev/null | head -10 || echo "No node_modules at root" && \
+    echo "=== /app/apps/web contents ===" && ls -la /app/apps/web/
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+# Server.js location depends on monorepo structure
+CMD ["node", "apps/web/server.js"]
