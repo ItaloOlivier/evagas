@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: 'EVAGas | LPG Gas Supplier Gauteng, Hartbeespoort, Rustenburg & Brits | Authorised Oryx Dealer',
   description: 'EVAGas - Authorised Oryx LPG supplier serving Gauteng, Hartbeespoort, Rustenburg & Brits. Bulk gas delivery, cylinder refills & wholesale LPG for homes and businesses. Call 010 599 2498.',
   keywords: 'LPG gas supplier Gauteng, gas delivery Hartbeespoort, bulk gas Rustenburg, gas refill Brits, Oryx gas dealer',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   openGraph: {
     type: 'website',
     url: 'https://evagas.co.za/',

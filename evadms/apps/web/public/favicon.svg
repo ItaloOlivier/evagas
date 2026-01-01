@@ -1,4 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#E63E2D"/>
-  <path d="M16 4c0 0-6 6-6 12 0 4 2.5 7 6 7s6-3 6-7c0-6-6-12-6-12zm0 16c-1.5 0-3-1.5-3-3.5 0-2.5 3-6 3-6s3 3.5 3 6c0 2-1.5 3.5-3 3.5z" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="cyl" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5a6474"/>
+      <stop offset="50%" stop-color="#9aa4ae"/>
+      <stop offset="100%" stop-color="#4a545e"/>
+    </linearGradient>
+    <linearGradient id="dome" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#6a747e"/>
+      <stop offset="100%" stop-color="#8a949e"/>
+    </linearGradient>
+    <linearGradient id="valve" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c5a030"/>
+      <stop offset="50%" stop-color="#f5d85a"/>
+      <stop offset="100%" stop-color="#b59020"/>
+    </linearGradient>
+  </defs>
+  <!-- Handle -->
+  <path d="M11 8 Q11 4 16 4 Q21 4 21 8" stroke="#5a646e" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Valve -->
+  <rect x="14" y="5" width="4" height="4" rx="0.5" fill="url(#valve)"/>
+  <ellipse cx="16" cy="5" rx="2" ry="0.8" fill="#d8b840"/>
+  <!-- Ring -->
+  <ellipse cx="16" cy="10" rx="7" ry="1.5" fill="#5a646e"/>
+  <!-- Cylinder body -->
+  <rect x="9" y="10" width="14" height="18" fill="url(#cyl)"/>
+  <!-- Top dome -->
+  <ellipse cx="16" cy="10" rx="7" ry="2" fill="url(#dome)"/>
+  <!-- Bottom -->
+  <ellipse cx="16" cy="28" rx="7" ry="2" fill="#3a444e"/>
+  <!-- Label background -->
+  <rect x="10" y="14" width="12" height="8" fill="rgba(0,0,0,0.4)" rx="1"/>
+  <!-- EVA text -->
+  <text x="16" y="19" text-anchor="middle" fill="#E63E2D" font-size="4" font-weight="bold" font-family="Arial, sans-serif">EVA</text>
+  <!-- LPG text -->
+  <text x="16" y="21.5" text-anchor="middle" fill="#ffffff" font-size="2.5" font-weight="bold" font-family="Arial, sans-serif">LPG</text>
 </svg>
