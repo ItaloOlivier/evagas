@@ -25,6 +25,9 @@ ENV NODE_ENV=production
 # Build the web app
 RUN npm run build --workspace=@evadms/web
 
+# Debug: List standalone contents
+RUN ls -la apps/web/.next/standalone/ && ls -la apps/web/.next/standalone/apps/web/
+
 # Production stage
 FROM base AS runner
 ENV NODE_ENV=production
