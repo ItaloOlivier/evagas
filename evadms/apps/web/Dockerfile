@@ -36,12 +36,12 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Verify files exist
-RUN ls -la /app/ && ls -la /app/apps/web/ && test -f /app/apps/web/server.js
+# Verify files exist (server.js is at root in standalone output)
+RUN ls -la /app/ && ls -la /app/apps/web/ && test -f /app/server.js
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3001
 
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "server.js"]
