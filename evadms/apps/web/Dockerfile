@@ -25,7 +25,7 @@ ENV NODE_ENV=production
 # Build the web app
 RUN npm run build --workspace=@evadms/web
 
-# Production stage
+# Production stage - rebuild trigger v2
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
