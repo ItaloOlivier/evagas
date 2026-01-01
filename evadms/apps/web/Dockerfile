@@ -31,20 +31,18 @@ ENV HOSTNAME="0.0.0.0"
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# Copy standalone output (includes node_modules with required deps)
+# Copy standalone output
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Debug: Show standalone structure
-RUN echo "=== /app contents ===" && ls -la /app/ && \
-    echo "=== /app/node_modules ===" && ls /app/node_modules 2>/dev/null | head -10 || echo "No node_modules at root" && \
-    echo "=== /app/apps/web contents ===" && ls -la /app/apps/web/
+# Copy node_modules from builder (standalone doesn't include it in this monorepo setup)
+COPY --from=builder /app/node_modules ./node_modules
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3001
 
-# Server.js location depends on monorepo structure
-CMD ["node", "apps/web/server.js"]
+# Server.js is at root level in standalone output
+CMD ["node", "server.js"]
