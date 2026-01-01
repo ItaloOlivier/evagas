@@ -281,12 +281,12 @@ export default function ForeignCylindersPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <Select value={statusFilter || 'all'} onValueChange={(val) => setStatusFilter(val === 'all' ? '' : val)}>
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
                       {Object.entries(statusConfig).map(([value, config]) => (
                         <SelectItem key={value} value={value}>{config.label}</SelectItem>
                       ))}
