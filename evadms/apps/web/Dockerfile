@@ -33,8 +33,12 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 # Copy standalone output
 COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+
+# Static files must be at .next/static relative to server.js (which is at /app/)
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+
+# Public files must be at public/ relative to server.js
+COPY --from=builder /app/apps/web/public ./public
 
 # Copy node_modules from builder (standalone doesn't include it in this monorepo setup)
 COPY --from=builder /app/node_modules ./node_modules
