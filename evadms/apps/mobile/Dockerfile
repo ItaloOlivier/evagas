@@ -39,19 +39,16 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 # Copy the entire standalone output
 COPY --from=builder /app/apps/mobile/.next/standalone ./
 
-# Debug: show what we have
-RUN echo "=== Standalone contents ===" && ls -la . && echo "=== Looking for server.js ===" && find . -name "server.js" -type f 2>/dev/null | head -5
+# Static files at .next/static relative to server.js (which is at root)
+COPY --from=builder /app/apps/mobile/.next/static ./.next/static
 
-# Static files - copy to where Next.js expects them relative to server.js
-COPY --from=builder /app/apps/mobile/.next/static ./apps/mobile/.next/static
-
-# Public files
-COPY --from=builder /app/apps/mobile/public ./apps/mobile/public
+# Public files at public/ relative to server.js
+COPY --from=builder /app/apps/mobile/public ./public
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3002
 
-# server.js location in standalone output
-CMD ["node", "apps/mobile/server.js"]
+# server.js is at the root in this standalone output
+CMD ["node", "server.js"]
