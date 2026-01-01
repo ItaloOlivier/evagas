@@ -5,15 +5,16 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json ./
-COPY apps/web/package.json ./apps/web/
-COPY packages/shared/package.json ./packages/shared/
+COPY evadms/package.json ./
+COPY evadms/apps/web/package.json ./apps/web/
+COPY evadms/packages/shared/package.json ./packages/shared/
+COPY evadms/packages/database/package.json ./packages/database/
 RUN npm install
 
 # Build stage
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY evadms/ .
 
 # Set environment for build
 ENV NEXT_TELEMETRY_DISABLED=1
