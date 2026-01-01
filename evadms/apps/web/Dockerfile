@@ -21,7 +21,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN npm run build --workspace=@evadms/web
 
-# Production stage
+# Production stage - v3 force rebuild
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
