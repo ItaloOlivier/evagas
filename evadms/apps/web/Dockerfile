@@ -19,6 +19,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY evadms/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+
+# Build-time argument for API URL (Next.js bakes NEXT_PUBLIC_* at build time)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN npm run build --workspace=@evadms/web
 
 # Production stage - v3 force rebuild
